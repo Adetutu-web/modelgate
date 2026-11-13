@@ -44,3 +44,39 @@ for (case in fx$cases) {
     })
   })
 }
+
+# validation_strategy ---------------------------------------------------------
+# These fixtures also carry upstream's `detail` text, compared after its em
+# dashes become the ASCII hyphens this package uses.
+vs <- jsonlite::fromJSON(testthat::test_path("fixtures", "validation_strategy_parity.json"),
+                         simplifyVector = FALSE)
+as_args <- function(x) lapply(x, function(v) if (is.list(v)) unlist(v) else v)
+ascii_dashes <- function(x) gsub(" — ", " - ", x, fixed = TRUE)
+
+test_that("validation_strategy fixtures were generated from the pinned upstream version", {
+  expect_equal(vs$upstream_version, "0.7.0")
+  expect_gt(length(vs$cases), 15L)
+})
+
+for (case in vs$cases) {
+  local({
+    case <- case
+    test_that(paste("parity: validation_strategy", case$name), {
+      chk <- validation_strategy_check(do.call(validation_config, as_args(case$config)),
+                                       do.call(compliance_config, as_args(case$compliance)))
+      rep <- run_gate_strict(gate_context(data.frame(a = c(1, 2, 3)), model_card = case$model_card),
+                             list(chk))
+      expect_equal(length(rep$results), length(case$expected))
+      for (i in seq_along(case$expected)) {
+        got <- rep$results[[i]]; want <- case$expected[[i]]
+        expect_identical(got$flag, want$flag)
+        expect_identical(got$blocking, want$blocking)
+        expect_identical(got$detail, ascii_dashes(want$detail))
+        expect_setequal(as.character(names(got$metadata)), as.character(names(want$metadata)))
+        for (key in names(want$metadata)) {
+          expect_identical(got$metadata[[key]], want$metadata[[key]], label = paste(case$name, key))
+        }
+      }
+    })
+  })
+}

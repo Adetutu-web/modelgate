@@ -1,0 +1,432 @@
+{
+ "upstream_version": "0.7.0",
+ "cases": [
+  {
+   "name": "no_model_card",
+   "model_card": null,
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "NOT_APPLICABLE",
+     "blocking": true,
+     "detail": "no model_card supplied \u2014 the validation strategy is a claim the card records, not something measurable from the data",
+     "metadata": {}
+    }
+   ]
+  },
+  {
+   "name": "empty_model_card",
+   "model_card": {},
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "NOT_APPLICABLE",
+     "blocking": true,
+     "detail": "no model_card supplied \u2014 the validation strategy is a claim the card records, not something measurable from the data",
+     "metadata": {}
+    }
+   ]
+  },
+  {
+   "name": "missing_strategy_high_risk",
+   "model_card": {
+    "use_case": "credit_scoring"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "model_card.validation_strategy missing \u2014 state how the holdout was produced, one of: out_of_time, temporal, forward_chaining, walk_forward, random_split, stratified_split, cross_validation, grouped_split",
+     "metadata": {
+      "check": "declared",
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "missing_strategy_low_risk",
+   "model_card": {
+    "use_case": "marketing_propensity"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "model_card.validation_strategy missing \u2014 state how the holdout was produced, one of: out_of_time, temporal, forward_chaining, walk_forward, random_split, stratified_split, cross_validation, grouped_split",
+     "metadata": {
+      "check": "declared",
+      "is_high_risk": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "null_strategy",
+   "model_card": {
+    "use_case": "pricing",
+    "validation_strategy": null
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "model_card.validation_strategy missing \u2014 state how the holdout was produced, one of: out_of_time, temporal, forward_chaining, walk_forward, random_split, stratified_split, cross_validation, grouped_split",
+     "metadata": {
+      "check": "declared",
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "whitespace_strategy",
+   "model_card": {
+    "use_case": "pricing",
+    "validation_strategy": "   "
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "model_card.validation_strategy missing \u2014 state how the holdout was produced, one of: out_of_time, temporal, forward_chaining, walk_forward, random_split, stratified_split, cross_validation, grouped_split",
+     "metadata": {
+      "check": "declared",
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "unrecognised_holdout",
+   "model_card": {
+    "use_case": "credit_scoring",
+    "validation_strategy": "holdout"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "model_card.validation_strategy='holdout' is not a recognised strategy \u2014 use one of: out_of_time, temporal, forward_chaining, walk_forward, random_split, stratified_split, cross_validation, grouped_split. 'holdout' and 'out_of_time' are different claims and only one of them is checkable",
+     "metadata": {
+      "check": "recognised",
+      "declared": "holdout"
+     }
+    }
+   ]
+  },
+  {
+   "name": "random_split_high_risk",
+   "model_card": {
+    "use_case": "credit_scoring",
+    "validation_strategy": "random_split"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "credit_scoring is high-risk and was validated with a 'random_split' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "random_split",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "out_of_time_high_risk",
+   "model_card": {
+    "use_case": "credit_scoring",
+    "validation_strategy": "out_of_time"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'out_of_time' split (out-of-time)",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "out_of_time",
+      "is_out_of_time": true,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "temporal_underwriting",
+   "model_card": {
+    "use_case": "underwriting",
+    "validation_strategy": "temporal"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'temporal' split (out-of-time)",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "temporal",
+      "is_out_of_time": true,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "cross_validation_claims",
+   "model_card": {
+    "use_case": "claims_decisioning",
+    "validation_strategy": "cross_validation"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "claims_decisioning is high-risk and was validated with a 'cross_validation' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "cross_validation",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "random_split_low_risk",
+   "model_card": {
+    "use_case": "marketing_propensity",
+    "validation_strategy": "random_split"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'random_split' split",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "random_split",
+      "is_out_of_time": false,
+      "is_high_risk": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "no_use_case",
+   "model_card": {
+    "validation_strategy": "random_split"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'random_split' split",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "random_split",
+      "is_out_of_time": false,
+      "is_high_risk": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "case_and_whitespace_normalised",
+   "model_card": {
+    "use_case": "PRICING",
+    "validation_strategy": "  Out_Of_Time "
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'out_of_time' split (out-of-time)",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "out_of_time",
+      "is_out_of_time": true,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "use_case_substring",
+   "model_card": {
+    "use_case": "motor_pricing_v2",
+    "validation_strategy": "stratified_split"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "motor_pricing_v2 is high-risk and was validated with a 'stratified_split' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "stratified_split",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "use_case_kept_unstripped",
+   "model_card": {
+    "use_case": " Credit_Scoring ",
+    "validation_strategy": "grouped_split"
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": " credit_scoring  is high-risk and was validated with a 'grouped_split' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "grouped_split",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "requirement_switched_off",
+   "model_card": {
+    "use_case": "credit_scoring",
+    "validation_strategy": "random_split"
+   },
+   "config": {
+    "require_out_of_time_for_high_risk": false
+   },
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'random_split' split",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "random_split",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "custom_high_risk_list",
+   "model_card": {
+    "use_case": "churn_model",
+    "validation_strategy": "random_split"
+   },
+   "config": {},
+   "compliance": {
+    "high_risk_use_cases": [
+     "churn"
+    ]
+   },
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "churn_model is high-risk and was validated with a 'random_split' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "random_split",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "custom_accepted_list",
+   "model_card": {
+    "use_case": "pricing",
+    "validation_strategy": "holdout"
+   },
+   "config": {
+    "accepted_validation_strategies": [
+     "holdout",
+     "out_of_time"
+    ],
+    "out_of_time_strategies": [
+     "out_of_time"
+    ]
+   },
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "VALIDATION_STRATEGY_RISK",
+     "blocking": true,
+     "detail": "pricing is high-risk and was validated with a 'holdout' split \u2014 a random split cannot tell you whether the model holds up on next period's business, which is what it will be applied to",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "holdout",
+      "is_out_of_time": false,
+      "is_high_risk": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "extra_fields_ignored",
+   "model_card": {
+    "use_case": "pricing",
+    "validation_strategy": "walk_forward",
+    "owner": "risk team",
+    "version": 3
+   },
+   "config": {},
+   "compliance": {},
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "validated with a 'walk_forward' split (out-of-time)",
+     "metadata": {
+      "check": "out_of_time_for_high_risk",
+      "declared": "walk_forward",
+      "is_out_of_time": true,
+      "is_high_risk": true
+     }
+    }
+   ]
+  }
+ ]
+}

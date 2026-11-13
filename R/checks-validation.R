@@ -99,3 +99,89 @@ split_overlap_check <- function(config = validation_config()) {
   })
   chk
 }
+
+# One model-card field as text, the way upstream reads it: missing, NULL, NA or
+# empty all become "". A vector is joined so it is reported, not silently cut.
+card_text <- function(card, field) {
+  v <- card[[field]]
+  if (is.null(v) || length(v) == 0L || all(is.na(v))) return("")
+  paste(as.character(unlist(v)), collapse = ", ")
+}
+
+# Python's repr() of a string, so messages read the same as upstream's.
+py_repr <- function(x) {
+  if (grepl("'", x, fixed = TRUE) && !grepl("\"", x, fixed = TRUE)) {
+    return(paste0("\"", x, "\""))
+  }
+  paste0("'", gsub("'", "\\'", x, fixed = TRUE), "'")
+}
+
+#' Was the holdout separated in time, or at random?
+#'
+#' A random split asks whether the model can predict a row it has not seen. An
+#' out-of-time split asks whether it can predict *next period*, which is what a
+#' deployed model will be asked to do. Seasonality, inflation and portfolio mix
+#' all leak backwards through a random split.
+#'
+#' So `model_card$validation_strategy` is required, must be one of
+#' `accepted_validation_strategies`, and for a high-risk use case (any of
+#' [compliance_config()]'s `high_risk_use_cases` appearing in
+#' `model_card$use_case`) must be out of time. Blocking.
+#'
+#' This is the one validation check that cannot be verified from the data. It
+#' records a claim, which is what a model card is for. Port of
+#' `ValidationStrategyCheck` in bdp-model-gate 0.7.0.
+#'
+#' @param config A [validation_config()].
+#' @param compliance A [compliance_config()].
+#' @return A `gate_check`.
+#' @export
+validation_strategy_check <- function(config = validation_config(),
+                                      compliance = compliance_config()) {
+  new_check("validation_strategy", "validation", TRUE, function(context) {
+    result <- function(flag, detail, metadata) {
+      list(check_result("validation_strategy", "validation", flag, detail, TRUE, metadata))
+    }
+    card <- context$model_card
+    if (length(card) == 0L) {
+      return(result("NOT_APPLICABLE", paste0(
+        "no model_card supplied - the validation strategy is a claim the card ",
+        "records, not something measurable from the data"), list()))
+    }
+
+    declared <- tolower(trimws(card_text(card, "validation_strategy")))
+    use_case <- tolower(card_text(card, "use_case"))
+    high_risk <- any(vapply(compliance$high_risk_use_cases,
+                            function(hr) grepl(hr, use_case, fixed = TRUE), logical(1)))
+    options <- paste(config$accepted_validation_strategies, collapse = ", ")
+
+    if (!nzchar(declared)) {
+      return(result("VALIDATION_STRATEGY_RISK",
+        paste0("model_card.validation_strategy missing - state how the holdout ",
+               "was produced, one of: ", options),
+        list(check = "declared", is_high_risk = high_risk)))
+    }
+    if (!declared %in% config$accepted_validation_strategies) {
+      return(result("VALIDATION_STRATEGY_RISK",
+        paste0("model_card.validation_strategy=", py_repr(declared), " is not a ",
+               "recognised strategy - use one of: ", options, ". 'holdout' and ",
+               "'out_of_time' are different claims and only one of them is checkable"),
+        list(check = "recognised", declared = declared)))
+    }
+
+    out_of_time <- declared %in% config$out_of_time_strategies
+    needs_out_of_time <- high_risk && config$require_out_of_time_for_high_risk && !out_of_time
+    detail <- if (needs_out_of_time) {
+      paste0(if (nzchar(use_case)) use_case else "this use case",
+             " is high-risk and was validated with a ", py_repr(declared),
+             " split - a random split cannot tell you whether the model holds up on ",
+             "next period's business, which is what it will be applied to")
+    } else {
+      paste0("validated with a ", py_repr(declared), " split",
+             if (out_of_time) " (out-of-time)" else "")
+    }
+    result(if (needs_out_of_time) "VALIDATION_STRATEGY_RISK" else "OK", detail,
+           list(check = "out_of_time_for_high_risk", declared = declared,
+                is_out_of_time = out_of_time, is_high_risk = high_risk))
+  })
+}

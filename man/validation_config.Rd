@@ -10,7 +10,13 @@ validation_config(
   max_split_overlap = 0.01,
   max_duplicate_fraction = 0.05,
   drift_threshold = 0.25,
-  categorical_drift_threshold = 0.15
+  categorical_drift_threshold = 0.15,
+  out_of_time_strategies = c("out_of_time", "temporal", "forward_chaining",
+    "walk_forward"),
+  accepted_validation_strategies = c("out_of_time", "temporal", "forward_chaining",
+    "walk_forward", "random_split", "stratified_split", "cross_validation",
+    "grouped_split"),
+  require_out_of_time_for_high_risk = TRUE
 )
 }
 \arguments{
@@ -25,6 +31,16 @@ rows within the validation set.}
 
 \item{drift_threshold, categorical_drift_threshold}{Used by the drift check
 (not yet ported).}
+
+\item{out_of_time_strategies}{Values of \code{model_card$validation_strategy}
+that count as a holdout separated in time rather than at random.}
+
+\item{accepted_validation_strategies}{Every value that field may take. An
+unrecognised value is flagged rather than accepted, because "holdout" and
+"out_of_time" are different claims and only one of them is checkable.}
+
+\item{require_out_of_time_for_high_risk}{\code{TRUE} to flag a high-risk use case
+(see \code{\link[=compliance_config]{compliance_config()}}) that was not validated out of time.}
 }
 \value{
 A list of class \code{validation_config}.

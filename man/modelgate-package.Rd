@@ -8,8 +8,21 @@
 \description{
 Native R port of the Python library bdp-model-gate. See \code{\link[=run_gate]{run_gate()}}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/Adetutu-web/modelgate}
+  \item Report bugs at \url{https://github.com/Adetutu-web/modelgate/issues}
+}
+
+}
 \author{
-\strong{Maintainer}: Adetutu Olubusoye \email{EMAIL@example.com}
+\strong{Maintainer}: Adetutu Olubusoye \email{olubusoyeadetutu@gmail.com}
+
+Authors:
+\itemize{
+  \item Vangelis Oden (author of bdp-model-gate, the reference Python implementation) [copyright holder]
+}
 
 }
 \keyword{internal}

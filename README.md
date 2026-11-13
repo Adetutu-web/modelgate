@@ -19,7 +19,8 @@ report                    # prints the verdict and findings
 gate_exit_code(report)    # for CI
 ```
 
-**Status: pre-alpha.** One check is ported (`split_overlap`) plus the framework.
+**Status: pre-alpha.** Two checks are ported (`split_overlap`, `validation_strategy`)
+plus the framework.
 Targets bdp-model-gate **0.7.0**. See the roadmap below.
 
 Releases take the version number of the bdp-model-gate release whose behaviour
@@ -69,7 +70,7 @@ python tools/make_parity_fixtures.py
 ## Roadmap (what upstream has; ported = [x])
 
 - [x] framework: context, check, run, verdict, exit codes
-- [ ] validation: `split_overlap` [x], `feature_contract`, `target_leakage`, `validation_strategy`, `feature_drift`
+- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_contract`, `target_leakage`, `feature_drift`
 - [ ] performance: `performance_thresholds`, `calibration`, `actual_vs_expected`, `risk_discrimination`
 - [ ] HTML report
 - [ ] fairness (10 checks), compliance (3), comparison (7), security (4)

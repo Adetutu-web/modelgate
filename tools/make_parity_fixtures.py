@@ -1,10 +1,11 @@
-"""Generate parity fixtures for split_overlap from the Python reference.
+"""Generate parity fixtures from the Python reference.
 
     pip install "bdp-model-gate==0.7.0" pandas numpy
     python tools/make_parity_fixtures.py
 
-Writes tests/testthat/fixtures/split_overlap_parity.json. Re-run, and review the
-diff, whenever the pinned upstream version changes. The oracle is not infallible
+Writes tests/testthat/fixtures/split_overlap_parity.json and
+validation_strategy_parity.json. Re-run, and review the diff, whenever the
+pinned upstream version changes. The oracle is not infallible
 (see the int-vs-float note in README.md), so treat a disagreement as a question,
 not automatically as an R bug.
 """
@@ -83,3 +84,57 @@ add("custom_loose_threshold", val, pd.concat([train, val.iloc[:30]], ignore_inde
 out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/split_overlap_parity.json"
 out.write_text(json.dumps({"upstream_version": upstream_version, "cases": cases}, allow_nan=False, indent=1))
 print(f"wrote {len(cases)} cases to {out}")
+
+
+# --------------------------------------------------------------------------
+# validation_strategy: reads only the model card, so every case shares one X.
+# Expected results include `detail`, compared after upstream's em dashes are
+# turned into the ASCII hyphens the R port uses.
+# --------------------------------------------------------------------------
+from bdp_model_gate.config import ComplianceConfig
+from bdp_model_gate.structured.validation_checks import ValidationStrategyCheck
+
+X_ANY = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+strategy_cases = []
+
+
+def add_strategy(name, card, cfg=None, compliance=None):
+    cfg, compliance = cfg or {}, compliance or {}
+    check = ValidationStrategyCheck(ValidationConfig(**cfg), ComplianceConfig(**compliance))
+    results = check.run(StructuredGateContext(X=X_ANY, model_card=card))
+    strategy_cases.append({
+        "name": name, "model_card": card, "config": cfg, "compliance": compliance,
+        "expected": [{"flag": r.flag, "blocking": bool(r.blocking), "detail": r.detail,
+                      "metadata": r.metadata} for r in results],
+    })
+
+
+add_strategy("no_model_card", None)
+add_strategy("empty_model_card", {})
+add_strategy("missing_strategy_high_risk", {"use_case": "credit_scoring"})
+add_strategy("missing_strategy_low_risk", {"use_case": "marketing_propensity"})
+add_strategy("null_strategy", {"use_case": "pricing", "validation_strategy": None})
+add_strategy("whitespace_strategy", {"use_case": "pricing", "validation_strategy": "   "})
+add_strategy("unrecognised_holdout", {"use_case": "credit_scoring", "validation_strategy": "holdout"})
+add_strategy("random_split_high_risk", {"use_case": "credit_scoring", "validation_strategy": "random_split"})
+add_strategy("out_of_time_high_risk", {"use_case": "credit_scoring", "validation_strategy": "out_of_time"})
+add_strategy("temporal_underwriting", {"use_case": "underwriting", "validation_strategy": "temporal"})
+add_strategy("cross_validation_claims", {"use_case": "claims_decisioning", "validation_strategy": "cross_validation"})
+add_strategy("random_split_low_risk", {"use_case": "marketing_propensity", "validation_strategy": "random_split"})
+add_strategy("no_use_case", {"validation_strategy": "random_split"})
+add_strategy("case_and_whitespace_normalised", {"use_case": "PRICING", "validation_strategy": "  Out_Of_Time "})
+add_strategy("use_case_substring", {"use_case": "motor_pricing_v2", "validation_strategy": "stratified_split"})
+add_strategy("use_case_kept_unstripped", {"use_case": " Credit_Scoring ", "validation_strategy": "grouped_split"})
+add_strategy("requirement_switched_off", {"use_case": "credit_scoring", "validation_strategy": "random_split"},
+             cfg={"require_out_of_time_for_high_risk": False})
+add_strategy("custom_high_risk_list", {"use_case": "churn_model", "validation_strategy": "random_split"},
+             compliance={"high_risk_use_cases": ["churn"]})
+add_strategy("custom_accepted_list", {"use_case": "pricing", "validation_strategy": "holdout"},
+             cfg={"accepted_validation_strategies": ["holdout", "out_of_time"], "out_of_time_strategies": ["out_of_time"]})
+add_strategy("extra_fields_ignored", {"use_case": "pricing", "validation_strategy": "walk_forward",
+                                      "owner": "risk team", "version": 3})
+
+out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/validation_strategy_parity.json"
+out.write_text(json.dumps({"upstream_version": upstream_version, "cases": strategy_cases},
+                          allow_nan=False, indent=1, ensure_ascii=True))
+print(f"wrote {len(strategy_cases)} cases to {out}")
