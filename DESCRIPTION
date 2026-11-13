@@ -3,7 +3,7 @@ Type: Package
 Title: Pre-Deployment Governance Gate for Statistical and Machine Learning Models
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Adetutu", "Olubusoye", , "olubusoyeadetutu@gmail.com", role = c("aut", "cre", "cph")),
+    person("Adetutu", "Olubusoye", , "olubusoyeadetutu@gmail.com", role = c("aut", "cre")),
     person("Vangelis", "Oden", role = c("aut", "cph"),
            comment = "author of bdp-model-gate, the reference Python implementation")
   )
