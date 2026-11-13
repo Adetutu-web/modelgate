@@ -1,0 +1,10 @@
+.Rproj.user/
+.Rhistory
+.RData
+*.Rcheck/
+*.tar.gz
+__pycache__/
+.Rproj.user
+.httr-oauth
+.DS_Store
+.quarto

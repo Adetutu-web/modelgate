@@ -1,0 +1,22 @@
+Package: modelgate
+Type: Package
+Title: Pre-Deployment Governance Gate for Statistical and Machine Learning Models
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Adetutu", "Olubusoye", , "olubusoyeadetutu@gmail.com", role = c("aut", "cre", "cph")),
+    person("Vangelis", "Oden", role = c("aut", "cph"),
+           comment = "author of bdp-model-gate, the reference Python implementation")
+  )
+Description: Runs a battery of automated checks on a model and its validation
+    data before the model is promoted to production, and returns a single
+    verdict (PASS, NEEDS_REVIEW or BLOCKED) that a pipeline can branch on.
+    The design, thresholds and verdict semantics follow the Python library
+    'bdp-model-gate' (<https://pypi.org/project/bdp-model-gate/>), which this
+    package is a native R port of.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Depends: R (>= 4.1.0)
+Suggests: testthat (>= 3.0.0), jsonlite
+Config/testthat/edition: 3

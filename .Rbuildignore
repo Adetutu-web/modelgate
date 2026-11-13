@@ -1,0 +1,8 @@
+^LICENSE\.md$
+^README\.md$
+^tools$
+^\.github$
+^\.git
+^.*\.Rproj$
+^\.Rproj\.user$
+^modelgate\.Rproj$
