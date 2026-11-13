@@ -1,9 +1,9 @@
 # modelgate
 
 Native R port of the Python library
-[bdp-model-gate](https://github.com/vanjy-eng/model-gate): run automated
-governance checks on a model before it ships and get one verdict a pipeline can
-branch on.
+[bdp-model-gate](https://github.com/vanjy-eng/model-gate), which is its
+reference implementation: run automated governance checks on a model before it
+ships and get one verdict a pipeline can branch on.
 
 | Verdict | Meaning | Exit code |
 |---|---|---|
@@ -21,6 +21,9 @@ gate_exit_code(report)    # for CI
 
 **Status: pre-alpha.** One check is ported (`split_overlap`) plus the framework.
 Targets bdp-model-gate **0.7.0**. See the roadmap below.
+
+Releases take the version number of the bdp-model-gate release whose behaviour
+they match, so the first release will be 0.7.0.
 
 ## How "correct" is defined here
 
@@ -45,8 +48,9 @@ have noticed if this were wrong", not "the tests pass":
 - Numbers match **by value**: an integer column in one frame and a double column
   in the other still overlap. Upstream 0.7.0 hashes by dtype, so
   `X = data.frame(a = 1:5)` against `X_train` holding `1.0 ... 5.0` reports
-  *0 of 5 overlapping* there. That looks like an upstream bug; it should be
-  reported with the repro in `tools/` before assuming either way.
+  *0 of 5 overlapping* there. Reported upstream as
+  [vanjy-eng/model-gate#31](https://github.com/vanjy-eng/model-gate/issues/31);
+  the repro is in `tools/`.
 - ASCII hyphens instead of em dashes in message text.
 
 ## Development
@@ -70,15 +74,8 @@ python tools/make_parity_fixtures.py
 - [ ] HTML report
 - [ ] fairness (10 checks), compliance (3), comparison (7), security (4)
 
-## Before publishing - decisions that are not mine to make
-
-- Real maintainer email in `DESCRIPTION` (currently a placeholder)
-- Copyright holder in `LICENSE` / `LICENSE.md` (you or Bluechip?)
-- Tell the upstream maintainer (open an issue on the Python repo, per its
-  CONTRIBUTING.md) and agree how he is credited in `DESCRIPTION`
-- Check the name is free on CRAN: `available::available("modelgate")`
-
 ## Licence and attribution
 
-MIT. Portions derive from bdp-model-gate (c) 2026 Vangelis Oden, MIT; see
-`inst/COPYRIGHTS`.
+MIT, copyright Vangelis Oden, author of bdp-model-gate. Check logic, thresholds,
+verdict semantics and test cases derive from bdp-model-gate; see `LICENSE`,
+`inst/COPYRIGHTS` and the authors listed in `DESCRIPTION`.
