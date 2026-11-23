@@ -1,6 +1,6 @@
 # Changelog
 
-## modelgate 0.0.0.9000
+## modelgate 0.7.0
 
 - Framework:
   [`gate_context()`](https://adetutu-web.github.io/modelgate/reference/gate_context.md),
