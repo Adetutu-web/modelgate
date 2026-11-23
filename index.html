@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Pre-Deployment Governance Gate for Statistical and Machine Learning Models • modelgate</title>
+<title>Governance Gate for Statistical and Machine Learning Models • modelgate</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Pre-Deployment Governance Gate for Statistical and Machine Learning Models">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Governance Gate for Statistical and Machine Learning Models">
 <meta name="description" content="Runs a battery of automated checks on a model and its validation data before the model is promoted to production, and returns a single verdict (PASS, NEEDS_REVIEW or BLOCKED) that a pipeline can branch on. The design, thresholds and verdict semantics follow the Python library bdp-model-gate (&lt;https://pypi.org/project/bdp-model-gate/&gt;), which this package is a native R port of.">
 <meta property="og:description" content="Runs a battery of automated checks on a model and its validation data before the model is promoted to production, and returns a single verdict (PASS, NEEDS_REVIEW or BLOCKED) that a pipeline can branch on. The design, thresholds and verdict semantics follow the Python library bdp-model-gate (&lt;https://pypi.org/project/bdp-model-gate/&gt;), which this package is a native R port of.">
 </head>
@@ -84,7 +84,7 @@
 <span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_gate.html">run_gate</a></span><span class="op">(</span><span class="va">ctx</span><span class="op">)</span></span>
 <span><span class="va">report</span>                    <span class="co"># prints the verdict and findings</span></span>
 <span><span class="fu"><a href="reference/gate_exit_code.html">gate_exit_code</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span>    <span class="co"># for CI</span></span></code></pre></div>
-<p><strong>Status: pre-alpha.</strong> All five validation checks are ported (<code>target_leakage</code>, <code>split_overlap</code>, <code>validation_strategy</code>, <code>feature_contract</code>, <code>feature_drift</code>) plus the framework. Targets bdp-model-gate <strong>0.7.0</strong>. See the roadmap below.</p>
+<p><strong>Status: first release.</strong> All five validation checks are ported (<code>target_leakage</code>, <code>split_overlap</code>, <code>validation_strategy</code>, <code>feature_contract</code>, <code>feature_drift</code>) plus the framework; the other upstream checks are on the roadmap below. Targets bdp-model-gate <strong>0.7.0</strong>. See the roadmap below.</p>
 <p>Releases take the version number of the bdp-model-gate release whose behaviour they match, so the first release will be 0.7.0.</p>
 <div class="section level2">
 <h2 id="how-correct-is-defined-here">How “correct” is defined here<a class="anchor" aria-label="anchor" href="#how-correct-is-defined-here"></a>

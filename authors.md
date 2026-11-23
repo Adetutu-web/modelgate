@@ -12,12 +12,12 @@
 Source:
 [`DESCRIPTION`](https://github.com/Adetutu-web/modelgate/blob/master/DESCRIPTION)
 
-Olubusoye A, Oden V (2026). *modelgate: Pre-Deployment Governance Gate
-for Statistical and Machine Learning Models*. R package version 0.7.0,
+Olubusoye A, Oden V (2026). *modelgate: Governance Gate for Statistical
+and Machine Learning Models*. R package version 0.7.0,
 <https://github.com/Adetutu-web/modelgate>.
 
     @Manual{,
-      title = {modelgate: Pre-Deployment Governance Gate for Statistical and Machine Learning Models},
+      title = {modelgate: Governance Gate for Statistical and Machine Learning Models},
       author = {Adetutu Olubusoye and Vangelis Oden},
       year = {2026},
       note = {R package version 0.7.0},

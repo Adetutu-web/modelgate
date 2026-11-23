@@ -20,10 +20,11 @@ report                    # prints the verdict and findings
 gate_exit_code(report)    # for CI
 ```
 
-**Status: pre-alpha.** All five validation checks are ported
+**Status: first release.** All five validation checks are ported
 (`target_leakage`, `split_overlap`, `validation_strategy`,
-`feature_contract`, `feature_drift`) plus the framework. Targets
-bdp-model-gate **0.7.0**. See the roadmap below.
+`feature_contract`, `feature_drift`) plus the framework; the other
+upstream checks are on the roadmap below. Targets bdp-model-gate
+**0.7.0**. See the roadmap below.
 
 Releases take the version number of the bdp-model-gate release whose
 behaviour they match, so the first release will be 0.7.0.
