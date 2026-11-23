@@ -1,7 +1,6 @@
 url: https://adetutu-web.github.io/modelgate/
 template:
   bootstrap: 5
-
 reference:
 - title: Running the gate
   desc: Build a context, run the checks, and read the verdict.
@@ -27,3 +26,4 @@ reference:
   contents:
   - new_check
   - check_result
+

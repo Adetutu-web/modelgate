@@ -12,6 +12,7 @@ Native R port of the Python library bdp-model-gate. See \code{\link[=run_gate]{r
 Useful links:
 \itemize{
   \item \url{https://github.com/Adetutu-web/modelgate}
+  \item \url{https://adetutu-web.github.io/modelgate/}
   \item Report bugs at \url{https://github.com/Adetutu-web/modelgate/issues}
 }
 

@@ -16,9 +16,9 @@ Description: Runs a battery of automated checks on a model and its validation
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Depends: R (>= 4.1.0)
 Suggests: testthat (>= 3.0.0), jsonlite
 Config/testthat/edition: 3
-URL: https://github.com/Adetutu-web/modelgate
+URL: https://github.com/Adetutu-web/modelgate, https://adetutu-web.github.io/modelgate/
 BugReports: https://github.com/Adetutu-web/modelgate/issues
