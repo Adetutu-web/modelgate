@@ -1,6 +1,6 @@
 Package: modelgate
 Type: Package
-Title: Pre-Deployment Governance Gate for Statistical and Machine Learning Models
+Title: Governance Gate for Statistical and Machine Learning Models
 Version: 0.7.0
 Authors@R: c(
     person("Adetutu", "Olubusoye", , "olubusoyeadetutu@gmail.com", role = c("aut", "cre")),
