@@ -33,3 +33,7 @@ An object of class \code{check_result}.
 risk string such as \code{"SPLIT_OVERLAP_RISK"}. Anything other than the first
 two counts as a finding.
 }
+\examples{
+r <- check_result("my_check", "validation", "OK", detail = "nothing to report")
+r$flag
+}

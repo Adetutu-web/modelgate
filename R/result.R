@@ -11,6 +11,9 @@
 #' @param metadata Named list of values behind the finding.
 #' @param duration_ms Filled in by [run_gate()].
 #' @return An object of class `check_result`.
+#' @examples
+#' r <- check_result("my_check", "validation", "OK", detail = "nothing to report")
+#' r$flag
 #' @export
 check_result <- function(check_name, category, flag, detail = "",
                          blocking = TRUE, metadata = list(),

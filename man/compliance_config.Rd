@@ -22,3 +22,10 @@ A list of class \code{compliance_config}.
 Defaults mirror \code{ComplianceConfig} in bdp-model-gate 0.7.0. Only the part the
 ported checks use is here so far.
 }
+\examples{
+churn_is_high_risk <- compliance_config(high_risk_use_cases = c("pricing", "churn"))
+card <- list(use_case = "churn_model", validation_strategy = "random_split")
+report <- run_gate(gate_context(data.frame(x = 1:3), model_card = card),
+                   list(validation_strategy_check(compliance = churn_is_high_risk)))
+report$results[[1]]$flag
+}

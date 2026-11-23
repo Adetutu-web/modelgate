@@ -38,3 +38,12 @@ upstream counts them as positives (binary) or returns \code{OK} with a model pow
 of NaN (regression); and a model power that is not finite is skipped rather
 than reported.
 }
+\examples{
+set.seed(1)
+y <- rbinom(200, 1, 0.3)
+score <- plogis(-1 + 2 * y + rnorm(200))        # a reasonable model's scores
+X <- data.frame(age = rnorm(200, 40, 10),
+                settled_amount = y * runif(200, 1000, 5000))   # only known after the outcome
+report <- run_gate(gate_context(X, y_true = y, y_pred = score), list(target_leakage_check()))
+report$results[[1]]$detail
+}

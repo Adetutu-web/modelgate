@@ -27,3 +27,9 @@ upstream can also read the fitted column names from scikit-learn, LightGBM
 and XGBoost model objects. R models record their columns in different ways,
 so pass \code{expected_features} when the training frame is not to hand.
 }
+\examples{
+X_val <- data.frame(income = c(30, 42), age = c(25, 32))    # columns swapped
+report <- run_gate(gate_context(X_val, expected_features = c("age", "income")),
+                   list(feature_contract_check()))
+report$results[[1]]$flag
+}

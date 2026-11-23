@@ -12,3 +12,6 @@ A list of \code{gate_check} objects.
 \description{
 The checks run by default
 }
+\examples{
+vapply(default_checks(), function(chk) chk$name, character(1))
+}

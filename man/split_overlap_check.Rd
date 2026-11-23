@@ -23,3 +23,9 @@ Port of \code{SplitOverlapCheck} in bdp-model-gate 0.7.0. One deliberate
 difference: numbers match by value, so an integer column in one frame and a
 double column in the other do not hide an overlap.
 }
+\examples{
+X_train <- data.frame(age = c(25, 32, 47, 51), region = c("n", "s", "e", "w"))
+X_val <- X_train[1:2, ]            # validation rows the model has already seen
+report <- run_gate(gate_context(X_val, X_train = X_train), list(split_overlap_check()))
+as.data.frame(report)[, c("flag", "detail")]
+}

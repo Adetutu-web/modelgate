@@ -33,3 +33,9 @@ This is the one validation check that cannot be verified from the data. It
 records a claim, which is what a model card is for. Port of
 \code{ValidationStrategyCheck} in bdp-model-gate 0.7.0.
 }
+\examples{
+card <- list(use_case = "credit_scoring", validation_strategy = "random_split")
+report <- run_gate(gate_context(data.frame(x = 1:3), model_card = card),
+                   list(validation_strategy_check()))
+report$results[[1]]$detail
+}

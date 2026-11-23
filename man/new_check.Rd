@@ -27,3 +27,16 @@ A check is a name, a category, a \code{blocking} flag and a function that takes 
 \code{blocking = TRUE} means a finding stops the deploy; \code{FALSE} routes it to a
 human as \code{NEEDS_REVIEW}. That is a judgement, not a default.
 }
+\examples{
+# A check of your own: no feature may be entirely missing.
+no_empty_columns <- new_check("no_empty_columns", "validation", TRUE, function(context) {
+  empty <- names(context$X)[vapply(context$X, function(col) all(is.na(col)), logical(1))]
+  found <- length(empty) > 0
+  list(check_result("no_empty_columns", "validation",
+                    if (found) "EMPTY_COLUMN_RISK" else "OK",
+                    detail = paste("empty columns:", if (found) toString(empty) else "none"),
+                    blocking = TRUE))
+})
+report <- run_gate(gate_context(data.frame(a = 1:3, b = NA)), list(no_empty_columns))
+gate_status(report)
+}

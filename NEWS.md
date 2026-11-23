@@ -17,3 +17,5 @@
   feature whose solo predictive power rivals the model's. Binary and continuous
   targets. `gate_context()` gains `task`. Runs first by default. Deliberate
   differences from upstream are listed in the README.
+* Every exported function has a runnable example, and the package has a
+  documentation website (pkgdown).

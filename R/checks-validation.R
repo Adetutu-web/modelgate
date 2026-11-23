@@ -33,6 +33,11 @@ pct <- function(x, digits) sprintf(paste0("%.", digits, "f%%"), 100 * x)
 #'
 #' @param config A [validation_config()].
 #' @return A `gate_check`.
+#' @examples
+#' X_train <- data.frame(age = c(25, 32, 47, 51), region = c("n", "s", "e", "w"))
+#' X_val <- X_train[1:2, ]            # validation rows the model has already seen
+#' report <- run_gate(gate_context(X_val, X_train = X_train), list(split_overlap_check()))
+#' as.data.frame(report)[, c("flag", "detail")]
 #' @export
 split_overlap_check <- function(config = validation_config()) {
   chk <- new_check("split_overlap", "validation", TRUE, function(context) {
@@ -135,6 +140,11 @@ py_repr <- function(x) {
 #' @param config A [validation_config()].
 #' @param compliance A [compliance_config()].
 #' @return A `gate_check`.
+#' @examples
+#' card <- list(use_case = "credit_scoring", validation_strategy = "random_split")
+#' report <- run_gate(gate_context(data.frame(x = 1:3), model_card = card),
+#'                    list(validation_strategy_check()))
+#' report$results[[1]]$detail
 #' @export
 validation_strategy_check <- function(config = validation_config(),
                                       compliance = compliance_config()) {
@@ -250,6 +260,13 @@ total_variation <- function(reference, live) {
 #' @param config A [validation_config()]; uses `drift_threshold` and
 #'   `categorical_drift_threshold`.
 #' @return A `gate_check`.
+#' @examples
+#' set.seed(1)
+#' X_train <- data.frame(age = rnorm(200, 40, 10))
+#' X_val <- data.frame(age = rnorm(100, 46, 10))   # six years older on average
+#' report <- run_gate(gate_context(X_val, X_train = X_train), list(feature_drift_check()))
+#' gate_status(report)                              # NEEDS_REVIEW: drift is not blocking
+#' report$results[[1]]$detail
 #' @export
 feature_drift_check <- function(config = validation_config()) {
   new_check("feature_drift", "validation", FALSE, function(context) {
@@ -338,6 +355,11 @@ feature_drift_check <- function(config = validation_config()) {
 #' so pass `expected_features` when the training frame is not to hand.
 #'
 #' @return A `gate_check`.
+#' @examples
+#' X_val <- data.frame(income = c(30, 42), age = c(25, 32))    # columns swapped
+#' report <- run_gate(gate_context(X_val, expected_features = c("age", "income")),
+#'                    list(feature_contract_check()))
+#' report$results[[1]]$flag
 #' @export
 feature_contract_check <- function() {
   new_check("feature_contract", "validation", TRUE, function(context) {
@@ -444,6 +466,14 @@ solo_power <- function(column, target, binary) {
 #' @param config A [validation_config()]; uses `leakage_ratio` and
 #'   `leakage_min_power`.
 #' @return A `gate_check`.
+#' @examples
+#' set.seed(1)
+#' y <- rbinom(200, 1, 0.3)
+#' score <- plogis(-1 + 2 * y + rnorm(200))        # a reasonable model's scores
+#' X <- data.frame(age = rnorm(200, 40, 10),
+#'                 settled_amount = y * runif(200, 1000, 5000))   # only known after the outcome
+#' report <- run_gate(gate_context(X, y_true = y, y_pred = score), list(target_leakage_check()))
+#' report$results[[1]]$detail
 #' @export
 target_leakage_check <- function(config = validation_config()) {
   new_check("target_leakage", "validation", TRUE, function(context) {

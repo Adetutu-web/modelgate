@@ -12,6 +12,15 @@
 #' @param context A [gate_context()].
 #' @param checks List of [new_check()] objects. Defaults to [default_checks()].
 #' @return An object of class `gate_report`.
+#' @examples
+#' set.seed(1)
+#' X_train <- data.frame(age = rnorm(200, 40, 10), income = rlnorm(200, 10, 0.5))
+#' X_val <- data.frame(age = rnorm(100, 40, 10), income = rlnorm(100, 10, 0.5))
+#' report <- run_gate(gate_context(X_val, X_train = X_train,
+#'                                 model_card = list(use_case = "marketing",
+#'                                                   validation_strategy = "random_split")))
+#' report
+#' as.data.frame(report)[, c("check_name", "flag")]
 #' @export
 run_gate <- function(context, checks = default_checks()) {
   if (!inherits(context, "gate_context")) stop("`context` must come from gate_context().", call. = FALSE)
@@ -41,6 +50,9 @@ run_gate <- function(context, checks = default_checks()) {
 #'
 #' @param report A `gate_report`.
 #' @return `"PASS"`, `"NEEDS_REVIEW"` or `"BLOCKED"`.
+#' @examples
+#' X <- data.frame(age = c(25, 32, 47))
+#' gate_status(run_gate(gate_context(X, X_train = X)))   # the same rows: BLOCKED
 #' @export
 gate_status <- function(report) {
   failing <- Filter(function(r) !result_is_ok(r), report$results)
@@ -56,6 +68,11 @@ gate_status <- function(report) {
 #'
 #' @inheritParams gate_status
 #' @return An integer.
+#' @examples
+#' X <- data.frame(age = c(25, 32, 47))
+#' report <- run_gate(gate_context(X, X_train = X))
+#' gate_exit_code(report)
+#' # In a CI script, end with: quit(status = gate_exit_code(report))
 #' @export
 gate_exit_code <- function(report) {
   switch(gate_status(report), PASS = 0L, BLOCKED = 1L, NEEDS_REVIEW = 2L)
@@ -63,6 +80,8 @@ gate_exit_code <- function(report) {
 
 #' The checks run by default
 #' @return A list of `gate_check` objects.
+#' @examples
+#' vapply(default_checks(), function(chk) chk$name, character(1))
 #' @export
 default_checks <- function() {
   list(target_leakage_check(), split_overlap_check(), validation_strategy_check(),

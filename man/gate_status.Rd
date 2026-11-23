@@ -16,3 +16,7 @@ gate_status(report)
 \code{BLOCKED} if any blocking check has a finding, \code{NEEDS_REVIEW} if only
 non-blocking checks do, \code{PASS} otherwise. \code{NOT_APPLICABLE} is not a finding.
 }
+\examples{
+X <- data.frame(age = c(25, 32, 47))
+gate_status(run_gate(gate_context(X, X_train = X)))   # the same rows: BLOCKED
+}

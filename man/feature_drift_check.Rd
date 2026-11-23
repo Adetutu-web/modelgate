@@ -36,3 +36,11 @@ treated as constant. Upstream tests its standard deviation against zero,
 which rounding defeats for values such as 0.1, and then reports shifts in
 the trillions.
 }
+\examples{
+set.seed(1)
+X_train <- data.frame(age = rnorm(200, 40, 10))
+X_val <- data.frame(age = rnorm(100, 46, 10))   # six years older on average
+report <- run_gate(gate_context(X_val, X_train = X_train), list(feature_drift_check()))
+gate_status(report)                              # NEEDS_REVIEW: drift is not blocking
+report$results[[1]]$detail
+}

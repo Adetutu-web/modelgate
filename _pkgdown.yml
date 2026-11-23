@@ -1,0 +1,29 @@
+url: https://adetutu-web.github.io/modelgate/
+template:
+  bootstrap: 5
+
+reference:
+- title: Running the gate
+  desc: Build a context, run the checks, and read the verdict.
+  contents:
+  - gate_context
+  - run_gate
+  - gate_status
+  - gate_exit_code
+  - default_checks
+- title: Validation checks
+  desc: Is the evaluation itself sound? These run first and block.
+  contents:
+  - target_leakage_check
+  - split_overlap_check
+  - validation_strategy_check
+  - feature_contract_check
+  - feature_drift_check
+- title: Settings
+  contents:
+  - validation_config
+  - compliance_config
+- title: Writing your own check
+  contents:
+  - new_check
+  - check_result

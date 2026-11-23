@@ -15,6 +15,18 @@ valid_categories <- c("validation", "fairness", "performance", "compliance",
 #' @param blocking `TRUE` or `FALSE`.
 #' @param run Function of one argument (the context).
 #' @return An object of class `gate_check`.
+#' @examples
+#' # A check of your own: no feature may be entirely missing.
+#' no_empty_columns <- new_check("no_empty_columns", "validation", TRUE, function(context) {
+#'   empty <- names(context$X)[vapply(context$X, function(col) all(is.na(col)), logical(1))]
+#'   found <- length(empty) > 0
+#'   list(check_result("no_empty_columns", "validation",
+#'                     if (found) "EMPTY_COLUMN_RISK" else "OK",
+#'                     detail = paste("empty columns:", if (found) toString(empty) else "none"),
+#'                     blocking = TRUE))
+#' })
+#' report <- run_gate(gate_context(data.frame(a = 1:3, b = NA)), list(no_empty_columns))
+#' gate_status(report)
 #' @export
 new_check <- function(name, category, blocking, run) {
   if (!is.character(name) || length(name) != 1L || is.na(name) || !nzchar(name)) {

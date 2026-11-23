@@ -25,3 +25,13 @@ A check that returns nothing, or anything other than a list of
 \code{\link[=check_result]{check_result()}}s, is also a \code{CHECK_ERROR}: a check that says nothing must
 not read as a check that found nothing.
 }
+\examples{
+set.seed(1)
+X_train <- data.frame(age = rnorm(200, 40, 10), income = rlnorm(200, 10, 0.5))
+X_val <- data.frame(age = rnorm(100, 40, 10), income = rlnorm(100, 10, 0.5))
+report <- run_gate(gate_context(X_val, X_train = X_train,
+                                model_card = list(use_case = "marketing",
+                                                  validation_strategy = "random_split")))
+report
+as.data.frame(report)[, c("check_name", "flag")]
+}

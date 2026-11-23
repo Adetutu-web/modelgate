@@ -56,3 +56,10 @@ A list of class \code{validation_config}.
 \description{
 Defaults mirror \code{ValidationConfig} in bdp-model-gate 0.7.0.
 }
+\examples{
+strict <- validation_config(max_split_overlap = 0, drift_threshold = 0.1)
+X <- data.frame(age = c(25, 32, 47, 51))
+report <- run_gate(gate_context(X, X_train = X[1, , drop = FALSE]),
+                   list(split_overlap_check(strict)))
+report$results[[2]]$flag
+}

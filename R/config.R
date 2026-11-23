@@ -24,6 +24,12 @@
 #' @param require_out_of_time_for_high_risk `TRUE` to flag a high-risk use case
 #'   (see [compliance_config()]) that was not validated out of time.
 #' @return A list of class `validation_config`.
+#' @examples
+#' strict <- validation_config(max_split_overlap = 0, drift_threshold = 0.1)
+#' X <- data.frame(age = c(25, 32, 47, 51))
+#' report <- run_gate(gate_context(X, X_train = X[1, , drop = FALSE]),
+#'                    list(split_overlap_check(strict)))
+#' report$results[[2]]$flag
 #' @export
 validation_config <- function(leakage_ratio = 0.95,
                               leakage_min_power = 0.80,
@@ -80,6 +86,12 @@ validation_config <- function(leakage_ratio = 0.95,
 #'   `model_card$use_case`, ignoring case, so `"pricing"` also covers
 #'   `"motor_pricing_v2"`.
 #' @return A list of class `compliance_config`.
+#' @examples
+#' churn_is_high_risk <- compliance_config(high_risk_use_cases = c("pricing", "churn"))
+#' card <- list(use_case = "churn_model", validation_strategy = "random_split")
+#' report <- run_gate(gate_context(data.frame(x = 1:3), model_card = card),
+#'                    list(validation_strategy_check(compliance = churn_is_high_risk)))
+#' report$results[[1]]$flag
 #' @export
 compliance_config <- function(high_risk_use_cases = c("pricing", "claims_decisioning",
                                                       "credit_scoring", "underwriting")) {

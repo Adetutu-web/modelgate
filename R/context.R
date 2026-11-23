@@ -15,6 +15,13 @@
 #'   Inference cannot tell a count target such as claims frequency from a
 #'   set of classes, so state it for anything you gate on.
 #' @return An object of class `gate_context`.
+#' @examples
+#' # A validation set, the training set and a short model card.
+#' X_train <- data.frame(age = c(25, 32, 47, 51, 38, 29), income = c(30, 42, 55, 61, 47, 33))
+#' X_val <- data.frame(age = c(41, 36, 58), income = c(50, 44, 66))
+#' ctx <- gate_context(X_val, X_train = X_train,
+#'                     model_card = list(use_case = "pricing", validation_strategy = "out_of_time"))
+#' names(ctx)
 #' @export
 gate_context <- function(X, y_true = NULL, y_pred = NULL, X_train = NULL,
                          protected_df = NULL, model_card = NULL,

@@ -6,3 +6,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^modelgate\.Rproj$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^cran-comments\.md$

@@ -43,3 +43,11 @@ An object of class \code{gate_context}.
 \description{
 Everything a check may look at
 }
+\examples{
+# A validation set, the training set and a short model card.
+X_train <- data.frame(age = c(25, 32, 47, 51, 38, 29), income = c(30, 42, 55, 61, 47, 33))
+X_val <- data.frame(age = c(41, 36, 58), income = c(50, 44, 66))
+ctx <- gate_context(X_val, X_train = X_train,
+                    model_card = list(use_case = "pricing", validation_strategy = "out_of_time"))
+names(ctx)
+}
