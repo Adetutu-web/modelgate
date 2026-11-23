@@ -149,3 +149,37 @@ for (case in fc$cases) {
     })
   })
 }
+
+# target_leakage --------------------------------------------------------------------
+tl <- jsonlite::fromJSON(testthat::test_path("fixtures", "target_leakage_parity.json"),
+                         simplifyVector = FALSE)
+
+test_that("target_leakage fixtures were generated from the pinned upstream version", {
+  expect_equal(tl$upstream_version, "0.7.0")
+  expect_gt(length(tl$cases), 20L)
+})
+
+for (case in tl$cases) {
+  local({
+    case <- case
+    test_that(paste("parity: target_leakage", case$name), {
+      ctx <- gate_context(frame_from_json(case$X), y_true = col_from_json(case$y_true),
+                          y_pred = col_from_json(case$y_pred), task = case$task)
+      chk <- target_leakage_check(do.call(validation_config, as_args(case$config)))
+      rep <- run_gate_strict(ctx, list(chk))
+      expect_equal(length(rep$results), length(case$expected))
+      for (i in seq_along(case$expected)) {
+        got <- rep$results[[i]]; want <- case$expected[[i]]
+        expect_identical(got$flag, want$flag)
+        expect_identical(got$blocking, want$blocking)
+        expect_identical(got$detail, ascii_dashes(want$detail))
+        expect_setequal(as.character(names(got$metadata)), as.character(names(want$metadata)))
+        for (key in names(want$metadata)) {
+          w <- want$metadata[[key]]
+          if (is.numeric(w)) expect_equal(got$metadata[[key]], w, tolerance = 1e-4, label = paste(case$name, key))
+          else expect_identical(got$metadata[[key]], w, label = paste(case$name, key))
+        }
+      }
+    })
+  })
+}

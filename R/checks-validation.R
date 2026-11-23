@@ -389,3 +389,141 @@ feature_contract_check <- function() {
                 actual_order = if (order_differs) actual else NULL))
   })
 }
+
+# How much of the target one column explains on its own, on a 0-1 scale that
+# is the same for a feature and for the model's predictions: |2 AUC - 1| for a
+# binary target, |r| for a continuous one, and for a non-numeric column the
+# square root of its correlation ratio with the target. NULL when there is
+# nothing to measure: fewer than 20 values, an undefined AUC, or so many
+# distinct levels that the column is effectively an identifier.
+solo_power <- function(column, target, binary) {
+  usable <- !is.na(column)
+  if (sum(usable) < min_usable_rows) return(NULL)
+  values <- column[usable]
+  y <- target[usable]
+
+  if (!is.numeric(values)) {
+    levels <- as.character(values)
+    if (length(unique(levels)) > max(20L, length(values) %/% 10L)) return(NULL)
+    return(sqrt(eta_squared(y, levels)))
+  }
+  values <- as.numeric(values)
+  if (all(values == values[1])) return(0)
+  if (binary) {
+    auc <- rank_auc(y != 0, values)
+    return(if (is.nan(auc)) NULL else abs(2 * auc - 1))
+  }
+  abs_pearson(values, y)
+}
+
+#' Does a single column do what the whole model does?
+#'
+#' The signature of a leaked target: a field filled in *after* the outcome was
+#' known and joined back into the data - a settlement amount on a claims model,
+#' a closure reason on a churn model, an ID ordered by outcome. The model learns
+#' it, scores beautifully offline, and collapses in production where the column
+#' is empty at scoring time.
+#'
+#' Each column's solo power is compared with the power of `y_pred`, on the same
+#' 0-1 scale: |2 AUC - 1| for a binary target, |r| for a continuous one, and the
+#' square root of the correlation ratio for a non-numeric column. A column is
+#' flagged (`LEAKAGE_RISK`, blocking) only when its power reaches both
+#' `leakage_min_power` and `leakage_ratio` times the model's: on a model scoring
+#' 0.55, a feature scoring 0.54 is 98% of it and means nothing.
+#'
+#' Needs `y_true` and `y_pred`. The task comes from [gate_context()]'s `task`,
+#' inferred from `y_true` when `"auto"`.
+#'
+#' Port of `LeakageCheck` in bdp-model-gate 0.7.0, for binary and regression
+#' targets. Differences: a multiclass target is skipped with a reason (not yet
+#' ported); rows with a missing `y_true` are left out and counted, where
+#' upstream counts them as positives (binary) or returns `OK` with a model power
+#' of NaN (regression); and a model power that is not finite is skipped rather
+#' than reported.
+#'
+#' @param config A [validation_config()]; uses `leakage_ratio` and
+#'   `leakage_min_power`.
+#' @return A `gate_check`.
+#' @export
+target_leakage_check <- function(config = validation_config()) {
+  new_check("target_leakage", "validation", TRUE, function(context) {
+    result <- function(flag, detail, metadata = list()) {
+      check_result("target_leakage", "validation", flag, detail, TRUE, metadata)
+    }
+    skip <- function(reason) list(result("NOT_APPLICABLE", reason))
+
+    if (is.null(context$y_true) || is.null(context$y_pred)) {
+      return(skip(paste0("no y_true/y_pred - leakage is measured by comparing each ",
+                         "feature's solo predictive power against the model's own")))
+    }
+    task <- resolve_task(context)
+    if (task == "multiclass") {
+      return(skip(paste0(
+        "multiclass targets are not ported yet - leakage needs the target reduced to ",
+        "the one outcome a feature might be leaking. If y_true is a count or a score ",
+        "rather than a set of classes, set task = \"regression\"")))
+    }
+    binary <- task == "binary"
+
+    y <- context$y_true
+    if (!is.numeric(y) && !is.logical(y)) {
+      stop(task, " y_true must be numeric or logical, not ", class(y)[1],
+           " - recode the outcome a feature might be leaking as 1 and every other as 0",
+           call. = FALSE)
+    }
+    if (!is.numeric(context$y_pred) && !is.logical(context$y_pred)) {
+      stop("y_pred must be a numeric score or a 0/1 prediction, not ",
+           class(context$y_pred)[1], call. = FALSE)
+    }
+
+    known <- !is.na(y)
+    n_left_out <- sum(!known)
+    target <- as.numeric(y[known])
+    scores <- as.numeric(context$y_pred[known])
+    X <- context$X[known, , drop = FALSE]
+    note <- if (n_left_out > 0L) {
+      sprintf(" (%d row(s) with no y_true were left out)", n_left_out)
+    } else ""
+
+    model_power <- solo_power(scores, target, binary)
+    if (is.null(model_power) || !is.finite(model_power) || model_power <= 0) {
+      return(skip(paste0("the model's predictions carry no signal against y_true, so ",
+                         "there is nothing for a feature to be suspiciously close to", note)))
+    }
+
+    suspects <- list()
+    for (feature in names(X)) {
+      power <- solo_power(X[[feature]], target, binary)
+      if (is.null(power)) next
+      if (isTRUE(power >= config$leakage_min_power) &&
+          isTRUE(power >= config$leakage_ratio * model_power)) {
+        suspects[[length(suspects) + 1L]] <- list(feature = feature, power = power)
+      }
+    }
+
+    if (length(suspects) == 0L) {
+      return(list(result("OK",
+        sprintf("no single feature approaches the model's own predictive power (%.3f)%s",
+                model_power, note),
+        list(model_power = round(model_power, 4),
+             threshold_ratio = config$leakage_ratio,
+             min_power = config$leakage_min_power,
+             n_features_scored = ncol(context$X)))))
+    }
+
+    powers <- vapply(suspects, function(s) s$power, numeric(1))
+    lapply(suspects[order(-powers)], function(s) {
+      result("LEAKAGE_RISK",
+        sprintf(paste0("%s alone reaches %.3f of the target on its own, %.0f%% of the ",
+                       "whole model's %.3f - check it is populated before the outcome is ",
+                       "known, and is available at scoring time%s"),
+                s$feature, s$power, 100 * (s$power / model_power), model_power, note),
+        list(feature = s$feature,
+             feature_power = round(s$power, 4),
+             model_power = round(model_power, 4),
+             power_ratio = round(s$power / model_power, 4),
+             threshold_ratio = config$leakage_ratio,
+             min_power = config$leakage_min_power))
+    })
+  })
+}

@@ -2,8 +2,11 @@
 #'
 #' Defaults mirror `ValidationConfig` in bdp-model-gate 0.7.0.
 #'
-#' @param leakage_ratio,leakage_min_power Both in (0, 1]; used by the
-#'   target-leakage check (not yet ported).
+#' @param leakage_ratio A feature is a suspected leak when its solo power
+#'   reaches this fraction of the model's own. Used by
+#'   [target_leakage_check()].
+#' @param leakage_min_power ...and only when that power is at least this, on
+#'   0-1: one ordinary feature should not explain the target this well.
 #' @param max_split_overlap Largest tolerated fraction of validation rows that
 #'   also appear in the training frame.
 #' @param max_duplicate_fraction Largest tolerated fraction of exact duplicate

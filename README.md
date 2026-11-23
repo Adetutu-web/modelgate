@@ -19,8 +19,9 @@ report                    # prints the verdict and findings
 gate_exit_code(report)    # for CI
 ```
 
-**Status: pre-alpha.** Four checks are ported (`split_overlap`,
-`validation_strategy`, `feature_contract`, `feature_drift`) plus the framework.
+**Status: pre-alpha.** All five validation checks are ported (`target_leakage`,
+`split_overlap`, `validation_strategy`, `feature_contract`, `feature_drift`)
+plus the framework.
 Targets bdp-model-gate **0.7.0**. See the roadmap below.
 
 Releases take the version number of the bdp-model-gate release whose behaviour
@@ -65,6 +66,11 @@ have noticed if this were wrong", not "the tests pass":
   from `X_train`. Upstream can also read them from scikit-learn, LightGBM and
   XGBoost model objects; R models record their columns in different ways, so
   pass `expected_features` when the training frame is not to hand.
+- `target_leakage` covers binary and continuous targets; a multiclass target
+  is skipped with a reason for now. Rows with a missing `y_true` are left out
+  and counted in the message. Upstream counts them as positives on a binary
+  target, and on a continuous one returns `OK` with a model power of NaN,
+  missing the leak. Repro in `tools/upstream_leakage_missing_target_repro.py`.
 - ASCII hyphens instead of em dashes in message text.
 
 ## Development
@@ -83,7 +89,7 @@ python tools/make_parity_fixtures.py
 ## Roadmap (what upstream has; ported = [x])
 
 - [x] framework: context, check, run, verdict, exit codes
-- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_contract` [x], `feature_drift` [x], `target_leakage`
+- [x] validation: `target_leakage`, `split_overlap`, `validation_strategy`, `feature_contract`, `feature_drift` (multiclass leakage still to come)
 - [ ] performance: `performance_thresholds`, `calibration`, `actual_vs_expected`, `risk_discrimination`
 - [ ] HTML report
 - [ ] fairness (10 checks), compliance (3), comparison (7), security (4)

@@ -11,7 +11,8 @@ gate_context(
   X_train = NULL,
   protected_df = NULL,
   model_card = NULL,
-  expected_features = NULL
+  expected_features = NULL,
+  task = "auto"
 )
 }
 \arguments{
@@ -30,6 +31,11 @@ row of \code{X}. Used only to measure fairness, never to fit.}
 was fitted on, in the order it expects them. Used by
 \code{\link[=feature_contract_check]{feature_contract_check()}}; without it that check falls back to the
 columns of \code{X_train}.}
+
+\item{task}{What the model predicts: \code{"binary"}, \code{"multiclass"},
+\code{"regression"}, or \code{"auto"} (the default) to infer it from \code{y_true}.
+Inference cannot tell a count target such as claims frequency from a
+set of classes, so state it for anything you gate on.}
 }
 \value{
 An object of class \code{gate_context}.

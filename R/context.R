@@ -10,11 +10,15 @@
 #'   was fitted on, in the order it expects them. Used by
 #'   [feature_contract_check()]; without it that check falls back to the
 #'   columns of `X_train`.
+#' @param task What the model predicts: `"binary"`, `"multiclass"`,
+#'   `"regression"`, or `"auto"` (the default) to infer it from `y_true`.
+#'   Inference cannot tell a count target such as claims frequency from a
+#'   set of classes, so state it for anything you gate on.
 #' @return An object of class `gate_context`.
 #' @export
 gate_context <- function(X, y_true = NULL, y_pred = NULL, X_train = NULL,
                          protected_df = NULL, model_card = NULL,
-                         expected_features = NULL) {
+                         expected_features = NULL, task = "auto") {
   if (!is.data.frame(X)) {
     stop("`X` must be a data.frame, not ", class(X)[1], ".", call. = FALSE)
   }
@@ -37,10 +41,14 @@ gate_context <- function(X, y_true = NULL, y_pred = NULL, X_train = NULL,
   if (!is.null(expected_features) && (!is.character(expected_features) || anyNA(expected_features))) {
     stop("`expected_features` must be a character vector with no missing values, or NULL.", call. = FALSE)
   }
+  task_options <- c("auto", "binary", "multiclass", "regression")
+  if (!is.character(task) || length(task) != 1L || is.na(task) || !task %in% task_options) {
+    stop("`task` must be one of: ", paste(task_options, collapse = ", "), ".", call. = FALSE)
+  }
   structure(
     list(X = X, y_true = y_true, y_pred = y_pred, X_train = X_train,
          protected_df = protected_df, model_card = model_card,
-         expected_features = expected_features),
+         expected_features = expected_features, task = task),
     class = "gate_context"
   )
 }

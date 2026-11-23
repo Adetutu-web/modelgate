@@ -4,8 +4,8 @@
     python tools/make_parity_fixtures.py
 
 Writes tests/testthat/fixtures/split_overlap_parity.json,
-validation_strategy_parity.json, feature_drift_parity.json and
-feature_contract_parity.json. Re-run, and review the diff, whenever the
+validation_strategy_parity.json, feature_drift_parity.json,
+feature_contract_parity.json and target_leakage_parity.json. Re-run, and review the diff, whenever the
 pinned upstream version changes. The oracle is not infallible
 (see the int-vs-float note in README.md), so treat a disagreement as a question,
 not automatically as an R bug.
@@ -254,3 +254,80 @@ out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/
 out.write_text(json.dumps({"upstream_version": upstream_version, "cases": contract_cases},
                           allow_nan=False, indent=1, ensure_ascii=True))
 print(f"wrote {len(contract_cases)} cases to {out}")
+
+
+# --------------------------------------------------------------------------
+# target_leakage, binary and regression targets. Not covered here, because the
+# R port deliberately differs (see README): multiclass targets, missing y_true,
+# and text labels (upstream raises).
+# --------------------------------------------------------------------------
+from bdp_model_gate.structured.validation_checks import LeakageCheck
+
+rng3 = np.random.default_rng(3)
+leak_cases = []
+
+
+def vec(a):
+    return [None if pd.isna(v) else (v.item() if hasattr(v, "item") else v) for v in a]
+
+
+def add_leak(name, X, y_true, y_pred, task="auto", cfg=None):
+    cfg = cfg or {}
+    ctx = StructuredGateContext(X=X, y_true=y_true, y_pred=y_pred, task=task)
+    results = LeakageCheck(ValidationConfig(**cfg)).run(ctx)
+    leak_cases.append({
+        "name": name, "X": to_cols(X), "y_true": vec(y_true), "y_pred": vec(y_pred),
+        "task": task, "config": cfg,
+        "expected": [{"flag": r.flag, "blocking": bool(r.blocking), "detail": r.detail,
+                      "metadata": json.loads(json.dumps(r.metadata, default=float))} for r in results],
+    })
+
+
+n = 300
+Xb = pd.DataFrame({
+    "income": np.round(rng3.lognormal(11.0, 0.5, n), 2),
+    "age": rng3.integers(21, 70, n).astype(float),
+    "tenure": rng3.integers(0, 200, n).astype(float),
+})
+logit = -3.0 + 2.0e-5 * Xb["income"].to_numpy() + 0.02 * Xb["tenure"].to_numpy()
+yb = (rng3.random(n) < 1 / (1 + np.exp(-logit))).astype(int)
+pb = np.round(1 / (1 + np.exp(-logit)), 6)
+
+add_leak("binary_ordinary_features", Xb, yb, pb)
+add_leak("binary_copy_of_target", Xb.assign(settled=yb * 1000.0), yb, pb)
+add_leak("binary_inverted_copy", Xb.assign(open_flag=1.0 - yb), yb, pb)
+add_leak("binary_noisy_copy", Xb.assign(settled=yb * 50.0 + np.round(rng3.normal(0, 5, n), 2)), yb, pb)
+add_leak("binary_two_leaks_sorted", Xb.assign(a=yb * 3.0, b=yb * 2.0 + np.round(rng3.normal(0, 1.2, n), 3)), yb, pb)
+weak = np.round(rng3.random(n), 6)
+add_leak("weak_model_no_false_alarm", Xb, yb, weak)
+add_leak("weak_model_permissive_config", Xb, yb, weak, cfg={"leakage_min_power": 0.0, "leakage_ratio": 0.5})
+add_leak("hard_label_predictions", Xb.assign(settled=yb * 1.0), yb, (pb > 0.5).astype(int))
+add_leak("boolean_target", Xb.assign(settled=yb * 1.0), yb.astype(bool), pb)
+add_leak("categorical_column_equal_to_target", Xb.assign(status=np.where(yb == 1, "closed", "open")), yb, pb)
+add_leak("boolean_feature_equal_to_target", Xb.assign(flagged=yb.astype(bool)), yb, pb)
+add_leak("identifier_column_skipped", Xb.assign(row_id=[f"id{i}" for i in range(n)]), yb, pb)
+add_leak("low_cardinality_category_no_leak", Xb.assign(region=rng3.choice(["n", "s", "e", "w"], n)), yb, pb)
+miss = Xb.assign(settled=yb * 1.0); miss.loc[:259, "settled"] = np.nan
+add_leak("leak_with_40_usable_rows", miss, yb, pb)
+miss2 = Xb.assign(settled=yb * 1.0); miss2.loc[:280, "settled"] = np.nan
+add_leak("leak_with_19_usable_rows_skipped", miss2, yb, pb)
+add_leak("constant_feature", Xb.assign(k=1.0), yb, pb)
+add_leak("constant_predictions_no_signal", Xb, yb, np.full(n, 0.3))
+pmiss = pb.copy(); pmiss[:100] = np.nan
+add_leak("some_missing_predictions", Xb.assign(settled=yb * 1.0), yb, pmiss)
+add_leak("explicit_binary_task", Xb.assign(settled=yb * 1.0), yb, pb, task="binary")
+
+Xr = pd.DataFrame({"x1": np.round(rng3.normal(0, 1, n), 4), "x2": np.round(rng3.normal(0, 1, n), 4)})
+yr = np.round(2.0 * Xr["x1"].to_numpy() + rng3.normal(0, 1, n), 4)
+pr = np.round(2.0 * Xr["x1"].to_numpy(), 4)
+add_leak("regression_model_is_one_feature_scaled", Xr, yr, pr)
+add_leak("regression_scaled_copy", Xr.assign(paid=yr * 3.0 + 7.0), yr, pr)
+add_leak("regression_negative_correlation_leak", Xr.assign(remaining=-yr), yr, pr)
+yc = rng3.integers(0, 40, n).astype(float)
+add_leak("count_target_stated_as_regression", Xr.assign(claims_paid=yc * 2.0), yc, np.round(yc + rng3.normal(0, 3, n), 4), task="regression")
+add_leak("regression_category_explains_target", Xr.assign(band=np.where(yr > 0, "high", "low")), yr, pr)
+
+out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/target_leakage_parity.json"
+out.write_text(json.dumps({"upstream_version": upstream_version, "cases": leak_cases},
+                          allow_nan=False, indent=1, ensure_ascii=True))
+print(f"wrote {len(leak_cases)} cases to {out}")

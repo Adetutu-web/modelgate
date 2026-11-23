@@ -13,3 +13,7 @@
 * Fourth check: `feature_contract_check()` (category `validation`, blocking):
   columns missing from `X`, columns not seen in training, and the right columns
   in the wrong order. `gate_context()` gains `expected_features`. Runs by default.
+* Fifth check: `target_leakage_check()` (category `validation`, blocking): a
+  feature whose solo predictive power rivals the model's. Binary and continuous
+  targets. `gate_context()` gains `task`. Runs first by default. Deliberate
+  differences from upstream are listed in the README.
