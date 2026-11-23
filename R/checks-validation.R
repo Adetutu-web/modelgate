@@ -318,3 +318,74 @@ feature_drift_check <- function(config = validation_config()) {
     })
   })
 }
+
+#' Are these the columns the model was fitted on, in the order it expects?
+#'
+#' Silent column reordering is a classic production failure: a model handed a
+#' positional matrix scores confidently against the wrong features and nothing
+#' raises. A formula-based R model matches columns by name, but anything given
+#' `as.matrix(X)` - glmnet, xgboost, a scoring endpoint - does not.
+#'
+#' The expected columns come from `expected_features` in the [gate_context()]
+#' if given, otherwise from the columns of `X_train`. Blocking:
+#' `FEATURE_CONTRACT_RISK` when a column is missing from `X` or was not seen in
+#' training, `FEATURE_ORDER_RISK` when the columns match but their order does
+#' not.
+#'
+#' Port of `FeatureContractCheck` in bdp-model-gate 0.7.0. One difference:
+#' upstream can also read the fitted column names from scikit-learn, LightGBM
+#' and XGBoost model objects. R models record their columns in different ways,
+#' so pass `expected_features` when the training frame is not to hand.
+#'
+#' @return A `gate_check`.
+#' @export
+feature_contract_check <- function() {
+  new_check("feature_contract", "validation", TRUE, function(context) {
+    result <- function(flag, detail, metadata = list()) {
+      list(check_result("feature_contract", "validation", flag, detail, TRUE, metadata))
+    }
+    train <- context$X_train
+    if (!is.null(context$expected_features)) {
+      expected <- context$expected_features
+      source <- "context.expected_features"
+    } else if (!is.null(train) && nrow(train) > 0L && ncol(train) > 0L) {
+      expected <- names(train)
+      source <- "X_train.columns"
+    } else {
+      return(result("NOT_APPLICABLE", paste0(
+        "cannot tell what the model was fitted on - supply context.X_train, or ",
+        "context.expected_features for a model whose schema this library cannot ",
+        "read (a remote endpoint, say)")))
+    }
+
+    actual <- names(context$X)
+    n <- length(expected)
+    missing <- expected[!expected %in% actual]
+    extra <- actual[!actual %in% expected]
+
+    if (length(missing) > 0L || length(extra) > 0L) {
+      problems <- c(
+        if (length(missing) > 0L) paste0("missing from X: ", paste(missing, collapse = ", ")),
+        if (length(extra) > 0L) paste0("not seen in training: ", paste(extra, collapse = ", "))
+      )
+      return(result("FEATURE_CONTRACT_RISK",
+        paste0("X does not match the ", n, " feature(s) recorded in ", source, " - ",
+               paste(problems, collapse = "; ")),
+        list(check = "feature_set", source = source, missing = missing,
+             unexpected = extra, n_expected = n)))
+    }
+
+    order_differs <- !identical(actual[actual %in% expected], expected[expected %in% actual])
+    detail <- if (order_differs) {
+      paste0("X has the right ", n, " features but in a different order from ", source,
+             " - harmless for an estimator that reads column names, silently wrong for ",
+             "anything handed a positional array")
+    } else {
+      paste0("X matches the ", n, " feature(s) recorded in ", source, ", in order")
+    }
+    result(if (order_differs) "FEATURE_ORDER_RISK" else "OK", detail,
+           list(check = "feature_order", source = source, n_features = n,
+                expected_order = if (order_differs) expected else NULL,
+                actual_order = if (order_differs) actual else NULL))
+  })
+}

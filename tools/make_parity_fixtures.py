@@ -4,7 +4,8 @@
     python tools/make_parity_fixtures.py
 
 Writes tests/testthat/fixtures/split_overlap_parity.json,
-validation_strategy_parity.json and feature_drift_parity.json. Re-run, and review the diff, whenever the
+validation_strategy_parity.json, feature_drift_parity.json and
+feature_contract_parity.json. Re-run, and review the diff, whenever the
 pinned upstream version changes. The oracle is not infallible
 (see the int-vs-float note in README.md), so treat a disagreement as a question,
 not automatically as an R bug.
@@ -203,3 +204,53 @@ out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/
 out.write_text(json.dumps({"upstream_version": upstream_version, "cases": drift_cases},
                           allow_nan=False, indent=1, ensure_ascii=True))
 print(f"wrote {len(drift_cases)} cases to {out}")
+
+
+# --------------------------------------------------------------------------
+# feature_contract. Reads only column names, so frames are a few rows each.
+# Upstream can also read names from scikit-learn/LightGBM/XGBoost model
+# objects; the R port does not (see README), so no case passes a model.
+# --------------------------------------------------------------------------
+from bdp_model_gate.structured.validation_checks import FeatureContractCheck
+
+contract_cases = []
+
+
+def cols(*names):
+    return pd.DataFrame({c: [1.0, 2.0, 3.0] for c in names})
+
+
+def add_contract(name, X, X_train=None, expected_features=None):
+    kwargs = {"X": X, "X_train": X_train}
+    if expected_features is not None:
+        kwargs["expected_features"] = expected_features
+    results = FeatureContractCheck().run(StructuredGateContext(**kwargs))
+    contract_cases.append({
+        "name": name, "X": to_cols(X), "X_train": to_cols(X_train),
+        "expected_features": expected_features,
+        "expected": [{"flag": r.flag, "blocking": bool(r.blocking), "detail": r.detail,
+                      "metadata": r.metadata} for r in results],
+    })
+
+
+add_contract("match_in_order", cols("age", "income", "tenure"), expected_features=["age", "income", "tenure"])
+add_contract("reordered", cols("tenure", "income", "age"), expected_features=["age", "income", "tenure"])
+add_contract("one_renamed", cols("applicant_age", "income", "tenure"), expected_features=["age", "income", "tenure"])
+add_contract("only_missing", cols("age"), expected_features=["age", "income", "tenure"])
+add_contract("only_unexpected", cols("age", "income", "tenure", "postcode"), expected_features=["age", "income", "tenure"])
+add_contract("missing_and_reordered_reports_the_set_only", cols("tenure", "age"), expected_features=["age", "income", "tenure"])
+add_contract("several_missing_kept_in_expected_order", cols("z"), expected_features=["c", "a", "b"])
+add_contract("x_train_fallback_match", cols("a", "b"), X_train=cols("a", "b"))
+add_contract("x_train_fallback_reordered", cols("b", "a"), X_train=cols("a", "b"))
+add_contract("x_train_fallback_mismatch", cols("a", "c"), X_train=cols("a", "b"))
+add_contract("expected_features_beat_x_train", cols("a", "b"), X_train=cols("b", "a"), expected_features=["a", "b"])
+add_contract("empty_expected_list", cols("a", "b"), expected_features=[])
+add_contract("zero_row_x_train_is_not_used", cols("a", "b"), X_train=cols("a", "b").iloc[:0])
+add_contract("nothing_to_compare_with", cols("a", "b"))
+add_contract("single_feature", cols("only"), expected_features=["only"])
+add_contract("swap_in_the_middle", cols("a", "c", "b", "d"), expected_features=["a", "b", "c", "d"])
+
+out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/feature_contract_parity.json"
+out.write_text(json.dumps({"upstream_version": upstream_version, "cases": contract_cases},
+                          allow_nan=False, indent=1, ensure_ascii=True))
+print(f"wrote {len(contract_cases)} cases to {out}")

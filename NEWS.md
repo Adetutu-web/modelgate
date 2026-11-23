@@ -10,3 +10,6 @@
   standardised mean shift for numeric features, total variation distance for
   the rest. Runs by default. Two deliberate differences from upstream, listed
   in the README.
+* Fourth check: `feature_contract_check()` (category `validation`, blocking):
+  columns missing from `X`, columns not seen in training, and the right columns
+  in the wrong order. `gate_context()` gains `expected_features`. Runs by default.

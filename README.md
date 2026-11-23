@@ -19,8 +19,8 @@ report                    # prints the verdict and findings
 gate_exit_code(report)    # for CI
 ```
 
-**Status: pre-alpha.** Three checks are ported (`split_overlap`,
-`validation_strategy`, `feature_drift`) plus the framework.
+**Status: pre-alpha.** Four checks are ported (`split_overlap`,
+`validation_strategy`, `feature_contract`, `feature_drift`) plus the framework.
 Targets bdp-model-gate **0.7.0**. See the roadmap below.
 
 Releases take the version number of the bdp-model-gate release whose behaviour
@@ -61,6 +61,10 @@ have noticed if this were wrong", not "the tests pass":
   in one frame and text in the other, upstream (on pandas 2.x) looks levels up
   by position and reports a wrong distance, such as 0.75 where it should be 1.
   Repro in `tools/upstream_mixed_type_tvd_repro.py`.
+- `feature_contract` takes the expected columns from `expected_features`, then
+  from `X_train`. Upstream can also read them from scikit-learn, LightGBM and
+  XGBoost model objects; R models record their columns in different ways, so
+  pass `expected_features` when the training frame is not to hand.
 - ASCII hyphens instead of em dashes in message text.
 
 ## Development
@@ -79,7 +83,7 @@ python tools/make_parity_fixtures.py
 ## Roadmap (what upstream has; ported = [x])
 
 - [x] framework: context, check, run, verdict, exit codes
-- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_drift` [x], `feature_contract`, `target_leakage`
+- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_contract` [x], `feature_drift` [x], `target_leakage`
 - [ ] performance: `performance_thresholds`, `calibration`, `actual_vs_expected`, `risk_discrimination`
 - [ ] HTML report
 - [ ] fairness (10 checks), compliance (3), comparison (7), security (4)

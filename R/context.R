@@ -6,10 +6,15 @@
 #' @param protected_df Optional data.frame of protected attributes, one row per
 #'   row of `X`. Used only to measure fairness, never to fit.
 #' @param model_card Optional named list describing the model.
+#' @param expected_features Optional character vector: the columns the model
+#'   was fitted on, in the order it expects them. Used by
+#'   [feature_contract_check()]; without it that check falls back to the
+#'   columns of `X_train`.
 #' @return An object of class `gate_context`.
 #' @export
 gate_context <- function(X, y_true = NULL, y_pred = NULL, X_train = NULL,
-                         protected_df = NULL, model_card = NULL) {
+                         protected_df = NULL, model_card = NULL,
+                         expected_features = NULL) {
   if (!is.data.frame(X)) {
     stop("`X` must be a data.frame, not ", class(X)[1], ".", call. = FALSE)
   }
@@ -29,9 +34,13 @@ gate_context <- function(X, y_true = NULL, y_pred = NULL, X_train = NULL,
     }
   }
   if (!is.null(model_card) && !is.list(model_card)) stop("`model_card` must be a list or NULL.", call. = FALSE)
+  if (!is.null(expected_features) && (!is.character(expected_features) || anyNA(expected_features))) {
+    stop("`expected_features` must be a character vector with no missing values, or NULL.", call. = FALSE)
+  }
   structure(
     list(X = X, y_true = y_true, y_pred = y_pred, X_train = X_train,
-         protected_df = protected_df, model_card = model_card),
+         protected_df = protected_df, model_card = model_card,
+         expected_features = expected_features),
     class = "gate_context"
   )
 }

@@ -65,7 +65,8 @@ gate_exit_code <- function(report) {
 #' @return A list of `gate_check` objects.
 #' @export
 default_checks <- function() {
-  list(split_overlap_check(), validation_strategy_check(), feature_drift_check())
+  list(split_overlap_check(), validation_strategy_check(), feature_contract_check(),
+       feature_drift_check())
 }
 
 #' @export

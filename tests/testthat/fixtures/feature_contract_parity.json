@@ -1,0 +1,642 @@
+{
+ "upstream_version": "0.7.0",
+ "cases": [
+  {
+   "name": "match_in_order",
+   "X": {
+    "age": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "income": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "tenure": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "X matches the 3 feature(s) recorded in context.expected_features, in order",
+     "metadata": {
+      "check": "feature_order",
+      "source": "context.expected_features",
+      "n_features": 3,
+      "expected_order": null,
+      "actual_order": null
+     }
+    }
+   ]
+  },
+  {
+   "name": "reordered",
+   "X": {
+    "tenure": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "income": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "age": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_ORDER_RISK",
+     "blocking": true,
+     "detail": "X has the right 3 features but in a different order from context.expected_features \u2014 harmless for an estimator that reads column names, silently wrong for anything handed a positional array",
+     "metadata": {
+      "check": "feature_order",
+      "source": "context.expected_features",
+      "n_features": 3,
+      "expected_order": [
+       "age",
+       "income",
+       "tenure"
+      ],
+      "actual_order": [
+       "tenure",
+       "income",
+       "age"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "one_renamed",
+   "X": {
+    "applicant_age": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "income": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "tenure": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 3 feature(s) recorded in context.expected_features \u2014 missing from X: age; not seen in training: applicant_age",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [
+       "age"
+      ],
+      "unexpected": [
+       "applicant_age"
+      ],
+      "n_expected": 3
+     }
+    }
+   ]
+  },
+  {
+   "name": "only_missing",
+   "X": {
+    "age": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 3 feature(s) recorded in context.expected_features \u2014 missing from X: income, tenure",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [
+       "income",
+       "tenure"
+      ],
+      "unexpected": [],
+      "n_expected": 3
+     }
+    }
+   ]
+  },
+  {
+   "name": "only_unexpected",
+   "X": {
+    "age": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "income": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "tenure": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "postcode": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 3 feature(s) recorded in context.expected_features \u2014 not seen in training: postcode",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [],
+      "unexpected": [
+       "postcode"
+      ],
+      "n_expected": 3
+     }
+    }
+   ]
+  },
+  {
+   "name": "missing_and_reordered_reports_the_set_only",
+   "X": {
+    "tenure": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "age": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "age",
+    "income",
+    "tenure"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 3 feature(s) recorded in context.expected_features \u2014 missing from X: income",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [
+       "income"
+      ],
+      "unexpected": [],
+      "n_expected": 3
+     }
+    }
+   ]
+  },
+  {
+   "name": "several_missing_kept_in_expected_order",
+   "X": {
+    "z": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "c",
+    "a",
+    "b"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 3 feature(s) recorded in context.expected_features \u2014 missing from X: c, a, b; not seen in training: z",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [
+       "c",
+       "a",
+       "b"
+      ],
+      "unexpected": [
+       "z"
+      ],
+      "n_expected": 3
+     }
+    }
+   ]
+  },
+  {
+   "name": "x_train_fallback_match",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "expected_features": null,
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "X matches the 2 feature(s) recorded in X_train.columns, in order",
+     "metadata": {
+      "check": "feature_order",
+      "source": "X_train.columns",
+      "n_features": 2,
+      "expected_order": null,
+      "actual_order": null
+     }
+    }
+   ]
+  },
+  {
+   "name": "x_train_fallback_reordered",
+   "X": {
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "expected_features": null,
+   "expected": [
+    {
+     "flag": "FEATURE_ORDER_RISK",
+     "blocking": true,
+     "detail": "X has the right 2 features but in a different order from X_train.columns \u2014 harmless for an estimator that reads column names, silently wrong for anything handed a positional array",
+     "metadata": {
+      "check": "feature_order",
+      "source": "X_train.columns",
+      "n_features": 2,
+      "expected_order": [
+       "a",
+       "b"
+      ],
+      "actual_order": [
+       "b",
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "x_train_fallback_mismatch",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "c": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "expected_features": null,
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 2 feature(s) recorded in X_train.columns \u2014 missing from X: b; not seen in training: c",
+     "metadata": {
+      "check": "feature_set",
+      "source": "X_train.columns",
+      "missing": [
+       "b"
+      ],
+      "unexpected": [
+       "c"
+      ],
+      "n_expected": 2
+     }
+    }
+   ]
+  },
+  {
+   "name": "expected_features_beat_x_train",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": {
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "expected_features": [
+    "a",
+    "b"
+   ],
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "X matches the 2 feature(s) recorded in context.expected_features, in order",
+     "metadata": {
+      "check": "feature_order",
+      "source": "context.expected_features",
+      "n_features": 2,
+      "expected_order": null,
+      "actual_order": null
+     }
+    }
+   ]
+  },
+  {
+   "name": "empty_expected_list",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [],
+   "expected": [
+    {
+     "flag": "FEATURE_CONTRACT_RISK",
+     "blocking": true,
+     "detail": "X does not match the 0 feature(s) recorded in context.expected_features \u2014 not seen in training: a, b",
+     "metadata": {
+      "check": "feature_set",
+      "source": "context.expected_features",
+      "missing": [],
+      "unexpected": [
+       "a",
+       "b"
+      ],
+      "n_expected": 0
+     }
+    }
+   ]
+  },
+  {
+   "name": "zero_row_x_train_is_not_used",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": {
+    "a": [],
+    "b": []
+   },
+   "expected_features": null,
+   "expected": [
+    {
+     "flag": "NOT_APPLICABLE",
+     "blocking": true,
+     "detail": "cannot tell what the model was fitted on \u2014 supply context.X_train, or context.expected_features for a model whose schema this library cannot read (a remote endpoint, say)",
+     "metadata": {}
+    }
+   ]
+  },
+  {
+   "name": "nothing_to_compare_with",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": null,
+   "expected": [
+    {
+     "flag": "NOT_APPLICABLE",
+     "blocking": true,
+     "detail": "cannot tell what the model was fitted on \u2014 supply context.X_train, or context.expected_features for a model whose schema this library cannot read (a remote endpoint, say)",
+     "metadata": {}
+    }
+   ]
+  },
+  {
+   "name": "single_feature",
+   "X": {
+    "only": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "only"
+   ],
+   "expected": [
+    {
+     "flag": "OK",
+     "blocking": true,
+     "detail": "X matches the 1 feature(s) recorded in context.expected_features, in order",
+     "metadata": {
+      "check": "feature_order",
+      "source": "context.expected_features",
+      "n_features": 1,
+      "expected_order": null,
+      "actual_order": null
+     }
+    }
+   ]
+  },
+  {
+   "name": "swap_in_the_middle",
+   "X": {
+    "a": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "c": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "d": [
+     1.0,
+     2.0,
+     3.0
+    ]
+   },
+   "X_train": null,
+   "expected_features": [
+    "a",
+    "b",
+    "c",
+    "d"
+   ],
+   "expected": [
+    {
+     "flag": "FEATURE_ORDER_RISK",
+     "blocking": true,
+     "detail": "X has the right 4 features but in a different order from context.expected_features \u2014 harmless for an estimator that reads column names, silently wrong for anything handed a positional array",
+     "metadata": {
+      "check": "feature_order",
+      "source": "context.expected_features",
+      "n_features": 4,
+      "expected_order": [
+       "a",
+       "b",
+       "c",
+       "d"
+      ],
+      "actual_order": [
+       "a",
+       "c",
+       "b",
+       "d"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

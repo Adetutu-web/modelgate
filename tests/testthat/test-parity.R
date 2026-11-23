@@ -112,3 +112,40 @@ for (case in fd$cases) {
     })
   })
 }
+
+# feature_contract ----------------------------------------------------------------
+fc <- jsonlite::fromJSON(testthat::test_path("fixtures", "feature_contract_parity.json"),
+                         simplifyVector = FALSE)
+# Upstream metadata holds lists of names, or None where there is nothing to show.
+expect_meta <- function(got, want, label) {
+  if (is.null(want)) expect_null(got, label = label)
+  else if (is.list(want)) expect_identical(got, as.character(unlist(want)), label = label)
+  else expect_identical(got, want, label = label)
+}
+
+test_that("feature_contract fixtures were generated from the pinned upstream version", {
+  expect_equal(fc$upstream_version, "0.7.0")
+  expect_gt(length(fc$cases), 12L)
+})
+
+for (case in fc$cases) {
+  local({
+    case <- case
+    test_that(paste("parity: feature_contract", case$name), {
+      ef <- case$expected_features
+      if (!is.null(ef)) ef <- as.character(unlist(ef))
+      ctx <- gate_context(frame_from_json(case$X), X_train = frame_from_json(case$X_train),
+                          expected_features = ef)
+      rep <- run_gate_strict(ctx, list(feature_contract_check()))
+      expect_equal(length(rep$results), length(case$expected))
+      got <- rep$results[[1]]; want <- case$expected[[1]]
+      expect_identical(got$flag, want$flag)
+      expect_identical(got$blocking, want$blocking)
+      expect_identical(got$detail, ascii_dashes(want$detail))
+      expect_setequal(as.character(names(got$metadata)), as.character(names(want$metadata)))
+      for (key in names(want$metadata)) {
+        expect_meta(got$metadata[[key]], want$metadata[[key]], paste(case$name, key))
+      }
+    })
+  })
+}

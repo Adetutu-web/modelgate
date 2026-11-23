@@ -10,7 +10,8 @@ gate_context(
   y_pred = NULL,
   X_train = NULL,
   protected_df = NULL,
-  model_card = NULL
+  model_card = NULL,
+  expected_features = NULL
 )
 }
 \arguments{
@@ -24,6 +25,11 @@ gate_context(
 row of \code{X}. Used only to measure fairness, never to fit.}
 
 \item{model_card}{Optional named list describing the model.}
+
+\item{expected_features}{Optional character vector: the columns the model
+was fitted on, in the order it expects them. Used by
+\code{\link[=feature_contract_check]{feature_contract_check()}}; without it that check falls back to the
+columns of \code{X_train}.}
 }
 \value{
 An object of class \code{gate_context}.
