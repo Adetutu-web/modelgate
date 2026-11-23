@@ -1,0 +1,25 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://adetutu-web.github.io/modelgate/404.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/LICENSE-text.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/LICENSE.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/authors.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/index.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/news/index.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/check_result.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/compliance_config.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/default_checks.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/feature_contract_check.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/feature_drift_check.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/gate_context.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/gate_exit_code.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/gate_status.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/index.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/modelgate-package.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/new_check.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/run_gate.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/split_overlap_check.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/target_leakage_check.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/validation_config.html</loc></url>
+<url><loc>https://adetutu-web.github.io/modelgate/reference/validation_strategy_check.html</loc></url>
+</urlset>
+
