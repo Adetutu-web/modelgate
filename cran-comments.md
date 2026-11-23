@@ -16,4 +16,3 @@ Vangelis Oden, is listed in Authors@R as author and copyright holder.
 * GitHub Actions: ubuntu-latest (release, oldrel-1), windows-latest (release),
   macos-latest (release)
 * win-builder: R-devel (2026-11-17 r90926 ucrt): 1 NOTE (new submission)
-* win-builder: R-release: TO FILL IN
