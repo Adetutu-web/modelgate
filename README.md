@@ -19,8 +19,8 @@ report                    # prints the verdict and findings
 gate_exit_code(report)    # for CI
 ```
 
-**Status: pre-alpha.** Two checks are ported (`split_overlap`, `validation_strategy`)
-plus the framework.
+**Status: pre-alpha.** Three checks are ported (`split_overlap`,
+`validation_strategy`, `feature_drift`) plus the framework.
 Targets bdp-model-gate **0.7.0**. See the roadmap below.
 
 Releases take the version number of the bdp-model-gate release whose behaviour
@@ -52,6 +52,15 @@ have noticed if this were wrong", not "the tests pass":
   *0 of 5 overlapping* there. Reported upstream as
   [vanjy-eng/model-gate#31](https://github.com/vanjy-eng/model-gate/issues/31);
   the repro is in `tools/`.
+- `feature_drift` treats a training column whose values are all identical as
+  constant and skips it. Upstream tests the standard deviation against zero,
+  which rounding defeats for values such as 0.1: a 0.001 change then reports a
+  standardised mean shift of about 7e13. Repro in
+  `tools/upstream_constant_drift_repro.py`.
+- `feature_drift` matches category levels by label. When a column holds numbers
+  in one frame and text in the other, upstream (on pandas 2.x) looks levels up
+  by position and reports a wrong distance, such as 0.75 where it should be 1.
+  Repro in `tools/upstream_mixed_type_tvd_repro.py`.
 - ASCII hyphens instead of em dashes in message text.
 
 ## Development
@@ -70,7 +79,7 @@ python tools/make_parity_fixtures.py
 ## Roadmap (what upstream has; ported = [x])
 
 - [x] framework: context, check, run, verdict, exit codes
-- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_contract`, `target_leakage`, `feature_drift`
+- [ ] validation: `split_overlap` [x], `validation_strategy` [x], `feature_drift` [x], `feature_contract`, `target_leakage`
 - [ ] performance: `performance_thresholds`, `calibration`, `actual_vs_expected`, `risk_discrimination`
 - [ ] HTML report
 - [ ] fairness (10 checks), compliance (3), comparison (7), security (4)

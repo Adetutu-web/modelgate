@@ -29,8 +29,12 @@ also appear in the training frame.}
 \item{max_duplicate_fraction}{Largest tolerated fraction of exact duplicate
 rows within the validation set.}
 
-\item{drift_threshold, categorical_drift_threshold}{Used by the drift check
-(not yet ported).}
+\item{drift_threshold}{Largest tolerated standardised mean shift for a
+numeric feature (difference in means over the training standard
+deviation). Used by \code{\link[=feature_drift_check]{feature_drift_check()}}.}
+
+\item{categorical_drift_threshold}{Largest tolerated total variation
+distance, on 0-1, for any other feature. Used by \code{\link[=feature_drift_check]{feature_drift_check()}}.}
 
 \item{out_of_time_strategies}{Values of \code{model_card$validation_strategy}
 that count as a holdout separated in time rather than at random.}

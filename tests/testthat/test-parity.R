@@ -80,3 +80,35 @@ for (case in vs$cases) {
     })
   })
 }
+
+# feature_drift -----------------------------------------------------------------
+fd <- jsonlite::fromJSON(testthat::test_path("fixtures", "feature_drift_parity.json"),
+                         simplifyVector = FALSE)
+
+test_that("feature_drift fixtures were generated from the pinned upstream version", {
+  expect_equal(fd$upstream_version, "0.7.0")
+  expect_gt(length(fd$cases), 15L)
+})
+
+for (case in fd$cases) {
+  local({
+    case <- case
+    test_that(paste("parity: feature_drift", case$name), {
+      ctx <- gate_context(frame_from_json(case$X), X_train = frame_from_json(case$X_train))
+      rep <- run_gate_strict(ctx, list(feature_drift_check(do.call(validation_config, as_args(case$config)))))
+      expect_equal(length(rep$results), length(case$expected))
+      for (i in seq_along(case$expected)) {
+        got <- rep$results[[i]]; want <- case$expected[[i]]
+        expect_identical(got$flag, want$flag)
+        expect_identical(got$blocking, want$blocking)
+        expect_identical(got$detail, ascii_dashes(want$detail))
+        expect_setequal(as.character(names(got$metadata)), as.character(names(want$metadata)))
+        for (key in names(want$metadata)) {
+          w <- want$metadata[[key]]
+          if (is.numeric(w)) expect_equal(got$metadata[[key]], w, tolerance = 1e-4, label = paste(case$name, key))
+          else expect_identical(got$metadata[[key]], w, label = paste(case$name, key))
+        }
+      }
+    })
+  })
+}

@@ -6,3 +6,7 @@
 * Second check: `validation_strategy_check()` (category `validation`, blocking),
   with `compliance_config()` for the high-risk use cases. Runs by default and
   skips with a reason when there is no model card.
+* Third check: `feature_drift_check()` (category `validation`, non-blocking):
+  standardised mean shift for numeric features, total variation distance for
+  the rest. Runs by default. Two deliberate differences from upstream, listed
+  in the README.

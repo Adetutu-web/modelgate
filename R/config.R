@@ -8,8 +8,11 @@
 #'   also appear in the training frame.
 #' @param max_duplicate_fraction Largest tolerated fraction of exact duplicate
 #'   rows within the validation set.
-#' @param drift_threshold,categorical_drift_threshold Used by the drift check
-#'   (not yet ported).
+#' @param drift_threshold Largest tolerated standardised mean shift for a
+#'   numeric feature (difference in means over the training standard
+#'   deviation). Used by [feature_drift_check()].
+#' @param categorical_drift_threshold Largest tolerated total variation
+#'   distance, on 0-1, for any other feature. Used by [feature_drift_check()].
 #' @param out_of_time_strategies Values of `model_card$validation_strategy`
 #'   that count as a holdout separated in time rather than at random.
 #' @param accepted_validation_strategies Every value that field may take. An

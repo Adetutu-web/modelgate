@@ -185,3 +185,136 @@ validation_strategy_check <- function(config = validation_config(),
                 is_out_of_time = out_of_time, is_high_risk = high_risk))
   })
 }
+
+# A feature needs this many non-missing values in *both* frames to be scored
+# for drift; below it a mean or a share is noise. Upstream's `_MIN_ROWS`.
+min_usable_rows <- 20L
+
+# Python's str() of a float, so a threshold reads as upstream prints it:
+# the shortest form that round-trips, with ".0" on a whole number.
+py_float <- function(x) {
+  if (is.integer(x)) return(as.character(x))
+  out <- NULL
+  for (d in 15:17) {
+    out <- sprintf(paste0("%.", d, "g"), x)
+    if (as.numeric(out) == x) break
+  }
+  if (!grepl("[.eEn]", out)) out <- paste0(out, ".0")
+  out
+}
+
+# Sample standard deviation (n - 1), written out so the package needs no
+# imports.
+sample_sd <- function(x) sqrt(sum((x - mean(x))^2) / (length(x) - 1L))
+
+# Values as category labels that keep their type, as pandas does: the number 1
+# and the string "1" are different levels; integer 1 and double 1 are the same.
+category_keys <- function(x) {
+  if (is.numeric(x)) paste0("n:", sprintf("%.17g", x))
+  else if (is.logical(x)) paste0("b:", as.character(x))
+  else paste0("s:", as.character(x))
+}
+
+# Total variation distance between two samples' category shares, on 0-1.
+total_variation <- function(reference, live) {
+  p <- table(category_keys(reference)) / length(reference)
+  q <- table(category_keys(live)) / length(live)
+  levels <- union(names(p), names(q))
+  share <- function(tab) { s <- as.numeric(tab[levels]); s[is.na(s)] <- 0; s }
+  0.5 * sum(abs(share(q) - share(p)))
+}
+
+#' Does the validation set still look like the training set?
+#'
+#' Train-serve skew: a feature whose distribution has moved between `X_train`
+#' and `X`, so the model is graded on a population it was not fitted to. That
+#' is not necessarily wrong - an out-of-time holdout *should* differ a little -
+#' but a reviewer has to see it rather than infer it. **Non-blocking**: a
+#' finding routes to `NEEDS_REVIEW`, because a gate that hard-fails on every
+#' seasonal shift gets switched off.
+#'
+#' Numeric features (in both frames) are compared by standardised mean shift:
+#' the difference in means over the training standard deviation, so the
+#' threshold is unitless. Anything else is compared by total variation distance
+#' between the two frequency tables, on 0-1. Missing values are dropped first,
+#' and a feature with fewer than 20 usable values in either frame, or constant
+#' in training, is not scored. One `DRIFT_RISK` result per drifted feature,
+#' largest shift first.
+#'
+#' Port of `FeatureDriftCheck` in bdp-model-gate 0.7.0. One deliberate
+#' difference: a training column whose values are all identical is always
+#' treated as constant. Upstream tests its standard deviation against zero,
+#' which rounding defeats for values such as 0.1, and then reports shifts in
+#' the trillions.
+#'
+#' @param config A [validation_config()]; uses `drift_threshold` and
+#'   `categorical_drift_threshold`.
+#' @return A `gate_check`.
+#' @export
+feature_drift_check <- function(config = validation_config()) {
+  new_check("feature_drift", "validation", FALSE, function(context) {
+    result <- function(flag, detail, metadata = list()) {
+      check_result("feature_drift", "validation", flag, detail, FALSE, metadata)
+    }
+    train <- context$X_train
+    if (is.null(train) || nrow(train) == 0L || ncol(train) == 0L) {
+      return(list(result("NOT_APPLICABLE", paste0(
+        "no X_train supplied - train-serve skew needs the training frame to ",
+        "compare against"))))
+    }
+    shared <- intersect(names(context$X), names(train))
+    if (length(shared) == 0L) {
+      return(list(result("NOT_APPLICABLE",
+        "X and X_train share no column names - see the feature_contract check")))
+    }
+
+    drifted <- list()
+    scored <- 0L
+    for (feature in shared) {
+      reference <- train[[feature]]
+      live <- context$X[[feature]]
+      reference <- reference[!is.na(reference)]
+      live <- live[!is.na(live)]
+      if (length(reference) < min_usable_rows || length(live) < min_usable_rows) next
+
+      if (is.numeric(reference) && is.numeric(live)) {
+        if (all(reference == reference[1])) next  # constant: no scale to measure against
+        spread <- sample_sd(reference)
+        if (!is.finite(spread) || spread == 0) next
+        shift <- abs(mean(live) - mean(reference)) / spread
+        limit <- config$drift_threshold
+        unit <- "standardised mean shift"
+      } else {
+        shift <- total_variation(reference, live)
+        limit <- config$categorical_drift_threshold
+        unit <- "total variation distance"
+      }
+      scored <- scored + 1L
+      if (isTRUE(shift > limit)) {
+        drifted[[length(drifted) + 1L]] <- list(feature = feature, shift = shift,
+                                                limit = limit, unit = unit)
+      }
+    }
+
+    if (scored == 0L) {
+      return(list(result("NOT_APPLICABLE", sprintf(
+        "no shared feature had at least %d usable rows in both frames", min_usable_rows))))
+    }
+    if (length(drifted) == 0L) {
+      return(list(result("OK", sprintf(
+        "no drift above threshold across %d shared feature(s)", scored),
+        list(n_features_scored = scored))))
+    }
+
+    shifts <- vapply(drifted, function(d) d$shift, numeric(1))
+    lapply(drifted[order(-shifts)], function(d) {
+      result("DRIFT_RISK",
+        sprintf(paste0("%s: %s %.3f between training and validation (max %s) - the ",
+                       "model is being graded on a different population from the one ",
+                       "it was fitted to"),
+                d$feature, d$unit, d$shift, py_float(d$limit)),
+        list(feature = d$feature, shift = round(d$shift, 4), threshold = d$limit,
+             measure = d$unit, n_features_scored = scored))
+    })
+  })
+}

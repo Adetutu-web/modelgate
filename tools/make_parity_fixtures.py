@@ -3,8 +3,8 @@
     pip install "bdp-model-gate==0.7.0" pandas numpy
     python tools/make_parity_fixtures.py
 
-Writes tests/testthat/fixtures/split_overlap_parity.json and
-validation_strategy_parity.json. Re-run, and review the diff, whenever the
+Writes tests/testthat/fixtures/split_overlap_parity.json,
+validation_strategy_parity.json and feature_drift_parity.json. Re-run, and review the diff, whenever the
 pinned upstream version changes. The oracle is not infallible
 (see the int-vs-float note in README.md), so treat a disagreement as a question,
 not automatically as an R bug.
@@ -138,3 +138,68 @@ out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/
 out.write_text(json.dumps({"upstream_version": upstream_version, "cases": strategy_cases},
                           allow_nan=False, indent=1, ensure_ascii=True))
 print(f"wrote {len(strategy_cases)} cases to {out}")
+
+
+# --------------------------------------------------------------------------
+# feature_drift. Its own random stream, so adding cases here never changes the
+# fixtures above. Constant training columns use 1.0, the value upstream skips;
+# for values like 0.1 its zero-spread test fails (see README), so those are
+# covered by known-answer tests in R instead. So is a column holding numbers in
+# one frame and text in the other: pandas 2.x looks those levels up by
+# position, and upstream's distance comes out wrong (see README).
+# --------------------------------------------------------------------------
+from bdp_model_gate.structured.validation_checks import FeatureDriftCheck
+
+rng2 = np.random.default_rng(1)
+drift_cases = []
+
+
+def add_drift(name, X, train, cfg=None):
+    cfg = cfg or {}
+    results = FeatureDriftCheck(ValidationConfig(**cfg)).run(StructuredGateContext(X=X, X_train=train))
+    drift_cases.append({
+        "name": name, "X": to_cols(X), "X_train": to_cols(train), "config": cfg,
+        "expected": [{"flag": r.flag, "blocking": bool(r.blocking), "detail": r.detail,
+                      "metadata": json.loads(json.dumps(r.metadata, default=float))} for r in results],
+    })
+
+
+n = 400
+base = pd.DataFrame({
+    "age": np.round(rng2.normal(40, 10, n), 2),
+    "income": np.round(rng2.lognormal(10, 0.5, n), 2),
+    "region": rng2.choice(["north", "south", "east", "west"], n),
+    "member": rng2.choice([True, False], n),
+})
+first, second = base.iloc[:200].reset_index(drop=True), base.iloc[200:].reset_index(drop=True)
+
+add_drift("two_halves_of_one_sample", second, first)
+add_drift("shifted_numeric", second.assign(age=second["age"] + 5), first)
+add_drift("several_drifted_sorted_by_shift",
+          second.assign(age=second["age"] + 8, income=second["income"] * 1.5, region="north"), first)
+add_drift("categorical_disjoint", pd.DataFrame({"region": ["Kano"] * 100}), pd.DataFrame({"region": ["Lagos"] * 100}))
+add_drift("categorical_partial", pd.DataFrame({"c": ["a"] * 30 + ["b"] * 10}), pd.DataFrame({"c": ["a"] * 20 + ["b"] * 20}))
+add_drift("boolean_is_categorical", pd.DataFrame({"m": [True] * 35 + [False] * 5}), pd.DataFrame({"m": [True] * 20 + [False] * 20}))
+add_drift("constant_one_in_training_skipped", second.assign(flag=2.0), first.assign(flag=1.0))
+add_drift("only_feature_constant", pd.DataFrame({"flag": [2.0] * 50}), pd.DataFrame({"flag": [1.0] * 50}))
+add_drift("nineteen_rows_not_scored", second.iloc[:19], first.iloc[:19])
+add_drift("exactly_twenty_rows_scored", second.iloc[:20].assign(age=second["age"].iloc[:20] + 10), first.iloc[:20])
+add_drift("live_too_short", second.iloc[:19], first)
+miss = first.copy(); miss.loc[:174, "age"] = np.nan
+add_drift("missing_values_dropped_25_left", second, miss)
+miss2 = first.iloc[:30].copy(); miss2.loc[:11, "age"] = np.nan
+add_drift("missing_values_leave_18", second.iloc[:30], miss2[["age"]])
+add_drift("no_training_frame", second, None)
+add_drift("empty_training_frame", second, first.iloc[:0])
+add_drift("no_shared_columns", second, first.rename(columns=lambda c: c + "_t"))
+add_drift("custom_thresholds", second.assign(age=second["age"] + 4, region=["north"] * 120 + list(second["region"].iloc[120:])),
+          first, {"drift_threshold": 0.5, "categorical_drift_threshold": 0.3})
+ints = pd.DataFrame({"age": rng2.integers(20, 60, 60)})
+add_drift("int_train_float_live_is_numeric", pd.DataFrame({"age": ints["age"] + 6.5}), ints)
+add_drift("units_do_not_matter", second.assign(income=second["income"] * 1.2 * 1000), first.assign(income=first["income"] * 1000))
+add_drift("x_column_order_kept", second[["region", "income", "age"]].assign(age=second["age"] + 9, income=second["income"] * 2), first)
+
+out = pathlib.Path(__file__).resolve().parent.parent / "tests/testthat/fixtures/feature_drift_parity.json"
+out.write_text(json.dumps({"upstream_version": upstream_version, "cases": drift_cases},
+                          allow_nan=False, indent=1, ensure_ascii=True))
+print(f"wrote {len(drift_cases)} cases to {out}")
